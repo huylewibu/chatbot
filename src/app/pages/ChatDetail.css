@@ -1,0 +1,147 @@
+strong {
+    border-radius: .25rem;
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: 3px; /* Làm bo góc */
+    display: block; /* Mỗi thẻ <strong> sẽ bắt đầu ở một dòng riêng */
+    margin-bottom: 2px; /* Tạo khoảng cách giữa các phần */
+}
+
+ul {
+    list-style-type: disc; /* Thêm bullet points */
+    margin-left: 20px; /* Tạo khoảng cách lề trái */
+    margin-top: 4px;
+}
+li {
+    margin-bottom: 6px; /* Khoảng cách giữa các dòng */
+    color: #fff; /* Màu chữ (tuỳ chỉnh theo nền) */
+}
+
+/* Tin nhắn của user */
+.message-container.user {
+    display: flex;
+    justify-content: flex-end; /* Đưa tin nhắn sang bên phải */
+}
+
+.message.user {
+    background: linear-gradient(90deg, #4caf50, #81c784); /* Gradient xanh lá */
+    color: white; /* Màu chữ */
+    border-radius: 20px; /* Bo góc */
+    padding: 10px 15px; /* Khoảng cách trong */
+    max-width: calc(80% - 10px); /* Giới hạn chiều rộng tin nhắn */
+    width: fit-content; /* Chiều rộng vừa với nội dung */
+    text-align: right; /* Căn chữ bên phải */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); /* Đổ bóng mềm mại */
+    font-size: 14px; /* Kích thước chữ */
+    font-weight: 500; /* Độ đậm chữ */
+    line-height: 1.5; /* Khoảng cách giữa các dòng */
+    position: relative; /* Để tạo hiệu ứng mũi tên */
+    margin-right: 10px; /* Khoảng cách với mép phải */
+}
+
+/* Hiệu ứng mũi tên cho tin nhắn user */
+.message.user::after {
+    content: "";
+    position: absolute;
+    top: 50%; /* Căn giữa theo chiều dọc */
+    transform: translateY(-50%); /* Đảm bảo mũi tên nằm chính giữa */
+    right: -10px; /* Vị trí ngang của mũi tên */
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 10px 0 10px 10px; /* Kích thước mũi tên */
+    border-color: transparent transparent transparent #4caf50; /* Màu nền của mũi tên */
+}
+
+/* Tin nhắn của bot */
+.message-container.bot {
+    justify-content: flex-start; /* Đưa tin nhắn sang bên trái */
+}
+
+.message.bot {
+    background: #333; /* Màu nền xám nhạt */
+    color: #f0f0f0; /* Màu chữ */
+    border-radius: 20px; /* Bo góc */
+    padding: 10px 15px; /* Khoảng cách trong */
+    max-width: calc(80% - 10px); /* Giới hạn chiều rộng tin nhắn */
+    width: fit-content; /* Chiều rộng vừa với nội dung */
+    text-align: left; /* Căn chữ bên trái */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Đổ bóng nhẹ */
+    font-size: 13px; /* Kích thước chữ */
+    font-weight: 500; /* Độ đậm chữ */
+    line-height: 1.5; /* Khoảng cách giữa các dòng */
+    position: relative; /* Để tạo hiệu ứng mũi tên */
+    margin-left: 10px; /* Khoảng cách với mép trái */
+}
+
+/* Hiệu ứng mũi tên cho tin nhắn bot */
+.message.bot::before {
+    content: "";
+    position: absolute;
+    top: 50%; /* Canh giữa chiều cao của tin nhắn */
+    transform: translateY(-50%); /* Đảm bảo mũi tên được căn giữa */
+    left: -10px; /* Vị trí ngang của mũi tên */
+    border-style: solid;
+    border-width: 10px 10px 10px 0; /* Kích thước mũi tên */
+    border-color: transparent #f0f0f0 transparent transparent; /* Màu nền của mũi tên */
+}
+
+::-webkit-scrollbar {
+    width: 10px; /* Độ rộng của scrollbar */
+    height: 10px; /* Độ cao của scrollbar ngang */
+}
+
+::-webkit-scrollbar-track {
+    background: #2d2d2d; /* Màu nền track */
+    border-radius: 10px; /* Bo góc track */
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(90deg, #4caf50, #81c784); /* Gradient cho thanh cuộn */
+    border-radius: 10px; /* Bo góc của thumb */
+    border: 2px solid #2d2d2d; /* Tạo viền để thumb không chìm vào track */
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(90deg, #81c784, #4caf50); /* Màu đổi khi hover */
+}
+
+/* Tùy chỉnh scrollbar ngang (nếu cần) */
+::-webkit-scrollbar-corner {
+    background: transparent; /* Nền góc vuông */
+}
+
+.loading-spinner {
+    border: 4px solid rgba(255, 255, 255, 0.2); /* Viền nhạt */
+    border-top: 4px solid #4caf50; /* Viền nổi bật */
+    border-radius: 50%; /* Tạo hình tròn */
+    width: 20px; /* Kích thước */
+    height: 20px;
+    animation: spin 1s linear infinite; /* Hiệu ứng xoay */
+    margin-left: 10px; /* Khoảng cách với input */
+}
+
+/* Keyframe xoay */
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+button.loading {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+button.loading .loading-spinner {
+    position: absolute;
+}
+
+button.loading span {
+    visibility: hidden; /* Ẩn chữ khi loading */
+}
