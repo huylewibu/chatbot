@@ -187,7 +187,7 @@ export const ChatDetail = () => {
                 {/* Nội dung ứng dụng */}
                 <div className="max-w-[90%] w-full mx-auto space-y-10">
                     {id ? (
-                        <div className="chat-container flex flex-col space-y-4 p-4 h-[500px] overflow-x-hidden overflow-y-auto">
+                        <div className="chat-container flex flex-col space-y-4 p-4 h-[70vh] overflow-x-hidden overflow-y-auto">
                             {messageDetail.map((item) => (
                                 <div className={`message-container ${item.isBot ? "bot" : "user"} mb-3`} key={item.id}>
                                     <div className={`message ${item.isBot ? "bot" : "user"}`}>
