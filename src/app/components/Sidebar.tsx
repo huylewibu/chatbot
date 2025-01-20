@@ -38,13 +38,19 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
 
     return (
         <div
-            className={`fixed top-0 left-0 h-full bg-primaryBg-sidebar z-40 w-[260px] transform transition-transform duration-300 ${
-                isOpen ? "translate-x-0" : "-translate-x-full"
-            } xl:translate-x-0 xl:relative xl:z-auto`}
+            className={`fixed top-0 left-0 h-full bg-primaryBg-sidebar z-40 w-[260px] transform transition-transform duration-300 ${isOpen ? "translate-x-0" : "-translate-x-full"
+                } xl:translate-x-0 xl:relative xl:z-auto`}
         >
             <div className="p-8">
+                <Link
+                    href="/chat/info"
+                    className="px-3 py-2 mb-4 inline-flex items-center bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-ml text-gray-800 dark:text-gray-300 rounded-md transition duration-200"
+                >
+                    <p>Trang chủ</p>
+                </Link>
+
                 <button
-                    className="px-4 py-2 flex items-center space-x-4 bg-gray-600 mb-10 text-xs"
+                    className="px-4 py-2 flex items-center space-x-4 bg-gray-700 hover:bg-gray-600 text-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white transition-colors duration-300 mb-10 text-xs rounded-md"
                     onClick={handleNewChat}
                 >
                     <Image src={IconPlus} alt="plus icon" className="h-4 w-4" />
@@ -55,7 +61,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                     <div className="flex flex-col space-y-6">
                         {data.map((chat) => (
                             <Link
-                                className="flex items-center justify-between p-4 bg-gray-800"
+                                className="flex items-center justify-between p-4 bg-gray-800 hover:bg-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors duration-300 rounded-md"
                                 key={chat?.id}
                                 href={`/chat/${chat.id}`}
                             >
@@ -65,7 +71,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                                         alt="chat icon"
                                         className="w-8 h-8"
                                     />
-                                    <p className="text-xs">{chat.title}</p>
+                                    <p className="text-xs text-white">{chat.title}</p>
                                 </div>
                                 <button
                                     onClick={(e) => {

@@ -12,22 +12,31 @@ import './ChatDetail.css';
 import { useEffect, useState } from "react";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
-import { MessageDetail } from "@/types/chat";
-import { useDispatch } from "react-redux";
-import { addChat, addMessage, setNameChat } from "../store/chatSlice/chatSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { addChat, addMessage, setNameChat, updateMessage } from "../store/chatSlice/chatSlice";
 import API_ENDPOINTS from "../api/apiEndpoints";
+import { RootState } from "../store/app";
 
 export const ChatDetail = () => {
-    const [messageDetail, setMessageDetail] = useState<MessageDetail[]>([]);
-    const [inputChat, setInputChat] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [inputChat, setInputChat] = useState<string>("");
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+    const [editMode, setEditMode] = useState<ChatApp.EditMode>({ isEditing: false, messageId: "", text: "" });
+
     const { id } = useParams();
     const router = useRouter();
     const dispatch = useDispatch();
 
     const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
-    
+
+    const messageDetail: ChatApp.MessageDetail[] = useSelector((state: RootState) =>
+        state.chat.data.find((chat) => chat.id === id)?.messages || []
+    )
+
+    const handleEditClick = (messageId: string, currentText: string) => {
+        setEditMode({ isEditing: true, messageId, text: currentText });
+    };
+
     // Xử lý câu hỏi ban đầu nếu có `question` trong query string
     useEffect(() => {
         const initChat = async () => {
@@ -50,18 +59,22 @@ export const ChatDetail = () => {
                     // Xử lý HTML an toàn
                     const botResponseHTML = DOMPurify.sanitize(await marked.parse(botResponseText));
 
-                    // Cập nhật giao diện
-                    setMessageDetail([
-                        { id: uuidv4(), text: initialQuestion, isBot: false },
-                        { id: uuidv4(), text: botResponseHTML, isBot: true },
-                    ]);
+                    dispatch(
+                        addMessage({
+                            idChat: id,
+                            userMess: initialQuestion, // Tin nhắn từ người dùng
+                            botMess: botResponseHTML,  // Phản hồi từ bot
+                            botMessageId: uuidv4(),    // ID duy nhất cho bot message
+                        })
+                    );
                 } catch (err) {
                     console.error("Error processing initial question:", err);
                 }
             }
         };
         initChat();
-    }, [id]);
+
+    }, [id, dispatch]);
 
     // Hàm xử lý gửi tin nhắn từ input
     const handleChatDetail = async () => {
@@ -85,16 +98,15 @@ export const ChatDetail = () => {
 
                 // Dispatch để thêm chat mới vào Redux store
                 dispatch(addChat(newChat));
-                
+
                 const renameResponse = await axios.post(API_ENDPOINTS.RENAME_CHAT, {
                     message: userMessage,
                 });
                 const newTitle = renameResponse.data?.chat_name || "Cuộc trò chuyện mới";
                 dispatch(setNameChat({ newTitle, chatId }));
 
-                // Chuyển hướng đến chat mới
                 router.push(`/chat/${chatId}?question=${encodeURIComponent(userMessage)}`);
-                return; // Thoát hàm để xử lý initChat
+                return;
             }
 
             if (messageDetail.length === 0) {
@@ -120,9 +132,7 @@ export const ChatDetail = () => {
             const botResponseText = typeof botResponse === "string" ? botResponse : JSON.stringify(botResponse);
             // Xử lý HTML an toàn
             const botResponseHTML = DOMPurify.sanitize(await marked.parse(botResponseText));
-            // Dispatch để thêm tin nhắn vào Redux store
-            const botResponseParts = botResponseHTML.split(" ")
-            let currentResponse = ""
+
             dispatch(
                 addMessage({
                     idChat: chatId,
@@ -132,23 +142,6 @@ export const ChatDetail = () => {
                 })
             );
 
-            // Cập nhật giao diện
-            setMessageDetail((prev) => [
-                ...prev,
-                { id: uuidv4(), text: userMessage, isBot: false },
-                { id: uuidv4(), text: "", isBot: true },
-            ]);
-
-            botResponseParts.forEach((part, index) => {
-                setTimeout(() => {
-                    currentResponse += part + " "; // Thêm cụm từ và khoảng trắng
-                    setMessageDetail((prev) => {
-                        const newMessages = [...prev];
-                        newMessages[newMessages.length - 1].text = currentResponse; // Cập nhật phần text của bot
-                        return newMessages;
-                    });
-                }, index * 50); // Mỗi cụm từ hiển thị sau 150ms (tùy chỉnh tốc độ)
-            });
 
         } catch (err) {
             console.error("Error sending message:", err);
@@ -157,25 +150,57 @@ export const ChatDetail = () => {
         }
     };
 
+    // Update câu hỏi
+    const handleSaveEdit = async (idChat: string | string[]) => {
+        if (!editMode.text.trim()) return;
+
+        const chatId = Array.isArray(idChat) ? idChat[0] : idChat;
+
+        try {
+            const payload = {
+                chat_id: chatId,
+                message_id: editMode.messageId,
+                new_text: editMode.text.trim(),
+                chat_history: messageDetail.map((msg) => ({
+                    role: msg.isBot ? "assistant" : "user",
+                    content: msg.text,
+                })),
+            };
+
+            const response = await axios.post(API_ENDPOINTS.UPDATE_CHAT, payload);
+
+            const { bot_response } = response.data;
+            // Dispatch Redux để cập nhật state
+            dispatch(updateMessage({
+                idChat: chatId,
+                messageId: editMode.messageId,
+                newText: editMode.text.trim(),
+                botResponse: bot_response,
+            }));
+
+            setEditMode({ isEditing: false, messageId: "", text: "" }); // Reset trạng thái chỉnh sửa
+        } catch (err) {
+            console.error("Error updating message:", err);
+        }
+    };
+
     return (
         <div className="relative flex w-[100%]">
             {/* Sidebar */}
             <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-    
+
             {/* Nút mở Sidebar */}
             <button
-                className={`fixed top-4 left-4 z-50 bg-gray-700 rounded-lg xl:hidden ${
-                    isSidebarOpen ? "hidden" : "block"
-                }`}
+                className={`fixed top-4 left-4 z-50 bg-gray-700 rounded-lg xl:hidden ${isSidebarOpen ? "hidden" : "block"
+                    }`}
                 onClick={toggleSidebar}
             >
             </button>
-    
+
             {/* Nội dung chính */}
             <div
-                className={`flex-1 transition-all duration-300 ${
-                    isSidebarOpen ? "ml-[260px] w-[500px]" : "ml-0"
-                } `}
+                className={`flex-1 transition-all duration-300 ${isSidebarOpen ? "ml-[260px] w-[500px]" : "ml-0"
+                    } `}
             >
                 <div className="flex items-center space-x-2 p-4">
                     <button onClick={toggleSidebar} className="xl:hidden">
@@ -183,23 +208,73 @@ export const ChatDetail = () => {
                     </button>
                     <h1 className="text-ml uppercase font-bold">Vua Chat Solomon</h1>
                 </div>
-    
+
                 {/* Nội dung ứng dụng */}
                 <div className="max-w-[90%] w-full mx-auto space-y-10">
                     {id ? (
                         <div className="chat-container flex flex-col space-y-4 p-4 h-[70vh] overflow-x-hidden overflow-y-auto">
                             {messageDetail.map((item) => (
-                                <div className={`message-container ${item.isBot ? "bot" : "user"} mb-3`} key={item.id}>
+                                <div
+                                    className={`message-container ${item.isBot ? "bot" : "user"} mb-3`}
+                                    key={item.id} // Key là duy nhất
+                                >
                                     <div className={`message ${item.isBot ? "bot" : "user"}`}>
                                         {item.isBot ? (
                                             <>
                                                 <Image src={IconStar} alt="star" className="w-8 h-8" />
-                                                <p dangerouslySetInnerHTML={{ __html: item.text }}></p>
+                                                <p
+                                                    dangerouslySetInnerHTML={{
+                                                        __html: DOMPurify.sanitize(marked.parse(item.pendingMessage || "") as string),
+                                                    }}
+                                                ></p>
                                             </>
                                         ) : (
                                             <>
-                                                <p>User U&I</p>
-                                                <p>{item.text}</p>
+                                                {editMode.isEditing && editMode.messageId === item.id ? (
+                                                    <div className="flex items-center space-x-3">
+                                                        <input
+                                                            type="text"
+                                                            value={editMode.text}
+                                                            onChange={(e) =>
+                                                                setEditMode((prev) => ({
+                                                                    ...prev,
+                                                                    text: e.target.value,
+                                                                }))
+                                                            }
+                                                            className="p-2 border rounded w-full bg-[#424242]"
+                                                        />
+                                                        <button
+                                                            className="p-2 bg-green-500 text-white rounded"
+                                                            onClick={() => handleSaveEdit(id)}
+                                                        >
+                                                            Save
+                                                        </button>
+                                                        <button
+                                                            className="p-2 bg-gray-500 text-white rounded"
+                                                            onClick={() =>
+                                                                setEditMode({
+                                                                    isEditing: false,
+                                                                    messageId: "",
+                                                                    text: "",
+                                                                })
+                                                            }
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center space-x-2">
+                                                        <p>{item.text}</p>
+                                                        <button
+                                                            onClick={() =>
+                                                                handleEditClick(item.id, item.text)
+                                                            }
+                                                            className="text-blue-500"
+                                                        >
+                                                            ✏️
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </>
                                         )}
                                     </div>
@@ -240,7 +315,7 @@ export const ChatDetail = () => {
                             type="text"
                             value={inputChat}
                             placeholder="Nhập câu hỏi tại đây"
-                            className="p-4 rounded-lg bg-background w-[90%] border"
+                            className="p-4 rounded-lg bg-background text-black dark:text-white dark:bg-gray-800 w-[90%] border dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400"
                             onChange={(e) => setInputChat(e.target.value)}
                             onKeyDown={(e) => {
                                 if (e.key === "Enter") {
@@ -262,7 +337,7 @@ export const ChatDetail = () => {
             </div>
         </div>
     );
-    
+
 };
 
 export default ChatDetail;

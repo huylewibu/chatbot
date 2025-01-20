@@ -17,6 +17,15 @@ li {
     color: #fff; /* Màu chữ (tuỳ chỉnh theo nền) */
 }
 
+.chat-container {
+    display: flex;
+    flex-direction: column; /* Giữ thứ tự tự nhiên */
+    justify-content: flex-end; /* Đưa tin nhắn xuống cuối */
+    overflow-y: auto; 
+    height: 70vh; 
+    padding: 1rem;
+  }
+
 /* Tin nhắn của user */
 .message-container.user {
     display: flex;

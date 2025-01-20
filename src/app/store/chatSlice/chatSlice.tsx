@@ -2,9 +2,8 @@ import { createSlice } from "@reduxjs/toolkit";
 import { v4 as uuidv4 } from "uuid";
 import { marked } from "marked";
 import DOMPurify  from "dompurify";
-import { ChatState } from "@/types/chat";
 
-const initData: ChatState = {
+const initData: ChatApp.ChatState = {
     data: [],
 };
 
@@ -51,20 +50,35 @@ const chatSlice = createSlice({
                 chat.title = newTitle;
             }
         },
-        updateBotMessage: (state, action) => {
-            const { idChat, messageId, newText, isTyping  } = action.payload
-            const chat = state.data.find((chat) => chat.id === idChat)
-            if (chat) {
-                const message = chat.messages.find((msg) => msg.id === messageId)
-                if (message && message.isBot) {
-                    message.text = newText;
-                    message.isTyping = isTyping;
-                }
+        updateMessage: (state, action) => {
+            const { idChat, messageId, newText, botResponse } = action.payload;
+            const chatIndex = state.data.findIndex((chat) => chat.id === idChat);
+        
+            if (chatIndex !== -1) {
+                const updatedMessages = state.data[chatIndex].messages.map((msg, index, messages) => {
+                    if (msg.id === messageId) {
+                        // Cập nhật câu hỏi của user
+                        return { ...msg, text: newText };
+                    }
+        
+                    // Tìm tin nhắn bot ngay sau tin nhắn user
+                    if (messages[index - 1]?.id === messageId && msg.isBot) {
+                        return { ...msg, pendingMessage: botResponse };
+                    }
+        
+                    return msg;
+                });
+        
+                // Cập nhật Redux state
+                state.data[chatIndex] = {
+                    ...state.data[chatIndex],
+                    messages: updatedMessages,
+                };
             }
         }
     }
 })
 
-export const { addChat, removeChat, addMessage, setNameChat, updateBotMessage } = chatSlice.actions;
+export const { addChat, removeChat, addMessage, setNameChat, updateMessage } = chatSlice.actions;
 
 export default chatSlice.reducer
