@@ -22,7 +22,7 @@ export const isAuthenticated = () => {
   if (!token) return false;
 
   try {
-      const decoded: any = jwtDecode(token);
+      const decoded: string | any = jwtDecode(token);
       const currentTime = Date.now() / 1000; // Thời gian hiện tại tính bằng giây
       if (decoded.exp < currentTime) {
           localStorage.removeItem("accessToken"); // Xóa token hết hạn

@@ -36,7 +36,7 @@ const LoginForm: React.FC = () => {
             dispatch(loginSuccess(userInfo));
 
             router.push("/chat/info"); // Điều hướng sau khi login
-        } catch (err: any) {
+        } catch (err: string | any) {
             const message =
                 err.response?.data?.detail || "Invalid username or password!";
             setError(message);
