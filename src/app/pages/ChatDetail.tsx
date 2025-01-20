@@ -16,12 +16,13 @@ import { useDispatch, useSelector } from "react-redux";
 import { addChat, addMessage, setNameChat, updateMessage } from "../store/chatSlice/chatSlice";
 import API_ENDPOINTS from "../api/apiEndpoints";
 import { RootState } from "../store/app";
+import { EditMode, MessageDetail } from "@/types/chat";
 
 export const ChatDetail = () => {
     const [inputChat, setInputChat] = useState<string>("");
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
-    const [editMode, setEditMode] = useState<ChatApp.EditMode>({ isEditing: false, messageId: "", text: "" });
+    const [editMode, setEditMode] = useState<EditMode>({ isEditing: false, messageId: "", text: "" });
 
     const { id } = useParams();
     const router = useRouter();
@@ -29,7 +30,7 @@ export const ChatDetail = () => {
 
     const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
-    const messageDetail: ChatApp.MessageDetail[] = useSelector((state: RootState) =>
+    const messageDetail: MessageDetail[] = useSelector((state: RootState) =>
         state.chat.data.find((chat) => chat.id === id)?.messages || []
     )
 
