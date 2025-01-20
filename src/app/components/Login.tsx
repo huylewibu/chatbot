@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import API_ENDPOINTS from "../api/apiEndpoints";
 import { loginSuccess, loginFailure } from "../store/authSlice/authSlice";
 import { useRouter } from "next/navigation";
@@ -36,11 +36,16 @@ const LoginForm: React.FC = () => {
             dispatch(loginSuccess(userInfo));
 
             router.push("/chat/info"); // Điều hướng sau khi login
-        } catch (err: string | any) {
-            const message =
-                err.response?.data?.detail || "Invalid username or password!";
-            setError(message);
-            dispatch(loginFailure(message));
+        } catch (err) {
+            if (axios.isAxiosError(error)) {
+                const message =
+                    error.response?.data?.detail || "Invalid username or password!";
+                setError(message);
+                dispatch(loginFailure(message));
+            } else {
+                console.error("Unexpected error:", error);
+                setError("An unexpected error occurred. Please try again later.");
+            }
         } finally {
             setIsLoading(false);
         }

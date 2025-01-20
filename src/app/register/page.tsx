@@ -37,22 +37,20 @@ const RegisterForm: React.FC = () => {
         e.preventDefault();
         dispatch(registerFailure(null)); // Xóa lỗi trước khi gửi lại
 
+        const errors: string[] = [];
+
         if (password !== confirmPassword) {
-            dispatch(registerFailure("Password sai rồi thằng gà!"));
-            return;
+            errors.push("Password không khớp.");
         }
-
         if (!validateEmail(email)) {
-            dispatch(registerFailure("Invalid email format. Please use a Gmail account."));
-            return;
+            errors.push("Email không đúng định dạng Gmail.");
+        }
+        if (!validatePassword(password)) {
+            errors.push("Password không đủ mạnh.");
         }
 
-        if (!validatePassword(password)) {
-            dispatch(
-                registerFailure(
-                    "Password must be at least 8 characters long, include an uppercase letter, a lowercase letter, a number, and a special character."
-                )
-            );
+        if (errors.length > 0) {
+            dispatch(registerFailure(errors.join(" ")));
             return;
         }
 
@@ -71,13 +69,15 @@ const RegisterForm: React.FC = () => {
             dispatch(
                 registerSuccess({
                     username: response.data.username,
-                    token: response.data.access_token, 
+                    token: response.data.access_token,
                 })
             );
 
             router.push("/chat/info"); // Chuyển về trang Login sau khi đăng ký thành công
-        } catch (err: any) {
-            dispatch(registerFailure(err.response?.data?.error || "Registration failed"));
+        } catch (err: unknown) {
+            if (axios.isAxiosError(err) && err.response) {
+                dispatch(registerFailure(err.response.data?.error || "Registration failed"));
+            }
         } finally {
             setIsLoading(false);
         }
@@ -168,6 +168,7 @@ const RegisterForm: React.FC = () => {
                         {isLoading ? "Registering..." : "Register"}
                     </button>
                 </form>
+                {/* eslint-disable-next-line react/no-unescaped-entities */}
                 <p className="text-sm text-center text-gray-500 mt-6">
                     Already have an account?
                     <Link href="/login" className="text-blue-500 hover:underline">

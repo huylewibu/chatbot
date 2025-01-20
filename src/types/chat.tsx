@@ -39,3 +39,15 @@ export interface AuthState {
     user: { username: string } | null;
     error: string | null;
 }
+
+export interface AuthResponse {
+    access_token: string;
+    refresh_token: string;
+    username: string;
+}
+
+export interface JwtPayload {
+    exp: number; // Thời gian hết hạn
+    iat: number; // Thời gian tạo token
+    [key: string]: any; // Các trường khác nếu có
+  }

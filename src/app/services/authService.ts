@@ -1,6 +1,7 @@
 import axios from "axios";
 import API_ENDPOINTS from "../api/apiEndpoints";
 import { jwtDecode } from "jwt-decode";
+import { JwtPayload } from "@/types/chat";
 
 
 // Làm mới token
@@ -22,7 +23,7 @@ export const isAuthenticated = () => {
   if (!token) return false;
 
   try {
-    const decoded: string | any = jwtDecode(token);
+    const decoded: JwtPayload = jwtDecode<JwtPayload>(token);
     const currentTime = Date.now() / 1000; // Thời gian hiện tại tính bằng giây
     if (decoded.exp < currentTime) {
       localStorage.removeItem("accessToken"); // Xóa token hết hạn
