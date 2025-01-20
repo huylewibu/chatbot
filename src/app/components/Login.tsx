@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import API_ENDPOINTS from "../api/apiEndpoints";
 import { loginSuccess, loginFailure } from "../store/authSlice/authSlice";
 import { useRouter } from "next/navigation";
@@ -37,9 +37,9 @@ const LoginForm: React.FC = () => {
 
             router.push("/chat/info"); // Điều hướng sau khi login
         } catch (err) {
-            if (axios.isAxiosError(error)) {
+            if (axios.isAxiosError(err)) {
                 const message =
-                    error.response?.data?.detail || "Invalid username or password!";
+                    err.response?.data?.detail || "Invalid username or password!";
                 setError(message);
                 dispatch(loginFailure(message));
             } else {
@@ -105,7 +105,7 @@ const LoginForm: React.FC = () => {
                     </button>
                 </form>
                 <p className="text-sm text-center text-gray-500 mt-6">
-                    Don't have an account?{" "}
+                    Don&apos;t have an account?{" "}
                     <Link href="/register" className="text-blue-500 hover:underline">
                         Register here
                     </Link>

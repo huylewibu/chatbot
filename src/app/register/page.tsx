@@ -168,9 +168,8 @@ const RegisterForm: React.FC = () => {
                         {isLoading ? "Registering..." : "Register"}
                     </button>
                 </form>
-                {/* eslint-disable-next-line react/no-unescaped-entities */}
                 <p className="text-sm text-center text-gray-500 mt-6">
-                    Already have an account?
+                    Already have an account&#63;{" "}
                     <Link href="/login" className="text-blue-500 hover:underline">
                         Login here
                     </Link>
