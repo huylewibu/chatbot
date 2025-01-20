@@ -49,5 +49,4 @@ export interface AuthResponse {
 export interface JwtPayload {
     exp: number; // Thời gian hết hạn
     iat: number; // Thời gian tạo token
-    [key: string]: any; // Các trường khác nếu có
   }
