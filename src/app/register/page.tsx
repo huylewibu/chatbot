@@ -1,4 +1,4 @@
-'use client';
+'use client'
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -169,7 +169,7 @@ const RegisterForm: React.FC = () => {
                     </button>
                 </form>
                 <p className="text-sm text-center text-gray-500 mt-6">
-                    Already have an account?{" "}
+                    Already have an account?
                     <Link href="/login" className="text-blue-500 hover:underline">
                         Login here
                     </Link>

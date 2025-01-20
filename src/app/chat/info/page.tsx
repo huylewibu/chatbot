@@ -15,6 +15,7 @@ const ChatInfo: React.FC = () => {
             const response = await axiosInstance.get(API_ENDPOINTS.AUTH_INFO);
             setUserInfo(response.data);
         } catch (error) {
+            console.log(error);
             clearAuthData()
             window.location.href = "/login";
         }

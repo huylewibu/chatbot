@@ -22,16 +22,17 @@ export const isAuthenticated = () => {
   if (!token) return false;
 
   try {
-      const decoded: string | any = jwtDecode(token);
-      const currentTime = Date.now() / 1000; // Thời gian hiện tại tính bằng giây
-      if (decoded.exp < currentTime) {
-          localStorage.removeItem("accessToken"); // Xóa token hết hạn
-          localStorage.removeItem("refreshToken");
-          return false;
-      }
-      return true;
+    const decoded: string | any = jwtDecode(token);
+    const currentTime = Date.now() / 1000; // Thời gian hiện tại tính bằng giây
+    if (decoded.exp < currentTime) {
+      localStorage.removeItem("accessToken"); // Xóa token hết hạn
+      localStorage.removeItem("refreshToken");
+      return false;
+    }
+    return true;
   } catch (error) {
-      return false; // Token không hợp lệ
+    console.log(error)
+    return false; // Token không hợp lệ
   }
 };
 
