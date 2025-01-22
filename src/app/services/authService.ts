@@ -1,7 +1,5 @@
-import axios from "axios";
-import API_ENDPOINTS from "../api/apiEndpoints";
 import { jwtDecode } from "jwt-decode";
-import { JwtPayload } from "@/types/chat";
+import { APIService } from "./APIServices";
 
 
 // Làm mới token
@@ -9,13 +7,23 @@ export const refreshAccessToken = async () => {
   const refresh = localStorage.getItem("refreshToken");
   if (!refresh) throw new Error("No refresh token found");
 
-  const response = await axios.post(API_ENDPOINTS.AUTH_TOKEN_REFRESH, { refresh });
-  const { access } = response.data;
+  return new Promise((resolve, reject) => {
+    APIService.refreshToken(
+      { refresh },
+      (data, error) => {
+        if (error || !data) {
+          reject(new Error("Failed to refresh token"));
+          return;
+        }
 
-  // Cập nhật access token mới
-  localStorage.setItem("accessToken", access);
+        const { access } = data;
 
-  return access;
+        // Lưu token mới
+        localStorage.setItem("accessToken", access);
+        resolve(access);
+      }
+    );
+  });
 };
 
 export const isAuthenticated = () => {
@@ -23,7 +31,7 @@ export const isAuthenticated = () => {
   if (!token) return false;
 
   try {
-    const decoded: JwtPayload = jwtDecode<JwtPayload>(token);
+    const decoded: Interfaces.JwtPayload = jwtDecode(token);
     const currentTime = Date.now() / 1000; // Thời gian hiện tại tính bằng giây
     if (decoded.exp < currentTime) {
       localStorage.removeItem("accessToken"); // Xóa token hết hạn

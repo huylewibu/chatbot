@@ -1,52 +1,162 @@
-export interface Chat {
-    id: string;
-    title: string;
-}
+declare namespace Interfaces {
+    interface HandelErrors {
+        code: string,
+        message: string
+    }
 
-export interface MessageDetail {
-    id: string;
-    text: string;
-    isBot: boolean;
-    isTyping?: boolean;
-    pendingMessage?: string;
-}
+    interface AddChatRequest {
+        title: string;
+    }
 
-export interface Chatbot {
-    id: string;
-    title: string;
-    messages: MessageDetail[];
-    isRenamed: boolean;
-}
+    interface AddMessageRequest {
+        chat_id: string;
+        message: string;
+        is_bot?: boolean;
+    }
 
-export interface ChatState {
-    data: Chatbot[];
-}
+    interface AddChatResponse {
+        message: string;
+        chat: {
+            id: string,
+            title: string,
+            username: string;
+            created_at: string,
+            updated_at: string,
+        }
+    }
+    
+    interface Chat {
+        id: string;
+        title: string;
+    }
 
-export interface EditMode {
-    isEditing: boolean;
-    messageId: string;
-    text: string;
-}
+    interface MessageDetail {
+        id: string;
+        text: string;
+        isBot: boolean;
+        isTyping?: boolean;
+        pendingMessage?: string;
+    }
 
-export interface Login {
-    username: string;
-    password: string;
-    email: string;
-}
+    interface SidebarProps {
+        isOpen: boolean;
+        toggleSidebar: () => void;
+    }
 
-export interface AuthState {
-    isAuthenticated: boolean;
-    user: { username: string } | null;
-    error: string | null;
-}
+    interface Chatbot {
+        id: string;
+        title: string;
+        messages: MessageDetail[];
+        isRenamed: boolean;
+        idDb: number;
+    }
 
-export interface AuthResponse {
-    access_token: string;
-    refresh_token: string;
-    username: string;
-}
+    interface ChatState {
+        data: Chatbot[];
+    }
 
-export interface JwtPayload {
-    exp: number; // Thời gian hết hạn
-    iat: number; // Thời gian tạo token
-  }
+    interface EditMode {
+        isEditing: boolean;
+        messageId: string;
+        text: string;
+    }
+
+    interface Login {
+        username: string;
+        password: string;
+        email: string;
+    }
+
+    interface AuthState {
+        isAuthenticated: boolean;
+        user: { username: string } | null;
+        error: HandelErrors | string | null;
+    }
+
+    interface AuthResponse {
+        access_token: string;
+        refresh_token: string;
+        username: string;
+    }
+
+    interface JwtPayload {
+        exp: number; // Thời gian hết hạn
+        iat: number; // Thời gian tạo token
+    }
+
+    interface ChatRequest {
+        chat_id: number | any;
+        message: string;
+        chat_history: ChatHistoryRequest[];
+    }
+
+    interface ChatHistoryRequest {
+        role: string;
+        content: string
+    }
+
+    interface ChatResponse {
+        user_message: string;
+        bot_response: string;
+    }
+
+    // API Rename Chat
+    interface RenameChatRequest {
+        message: string;
+        chat_id?: string | number;
+    }
+
+    interface RenameChatResponse {
+        chat_name: string;
+    }
+
+    // API Update Message
+    interface UpdateMessageRequest {
+        chat_id: string;
+        message_id: string;
+        new_text: string;
+        chat_history?: ChatHistoryRequest[];
+    }
+
+    interface UpdateMessageResponse {
+        message_id: string;
+        new_text: string;
+        bot_response: string;
+    }
+
+    // API Register
+    interface RegisterRequest {
+        username: string;
+        email: string;
+        password: string;
+    }
+
+    interface RegisterResponse {
+        message: string;
+        username: string;
+        access_token: string;
+        refresh_token: string;
+    }
+
+    // API Get User Info
+    interface UserInfoResponse {
+        username: string;
+        email: string;
+        last_login: string | null;
+    }
+
+    interface AuthTokenRequest {
+        username: string;
+        password: string;
+    }
+
+    interface AuthTokenResponse {
+        access: string;
+        refresh: string;
+        username: string;
+        email: string;
+        last_login: string;
+    }
+
+
+}

@@ -3,12 +3,12 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import API_ENDPOINTS from "../api/apiEndpoints";
 import Link from "next/link";
 import { useDispatch, useSelector } from "react-redux";
 import { registerFailure, registerSuccess } from "../store/authSlice/authSlice";
 import { RootState } from "../store/app";
 import ThemeSwitcher from "../components/ThemeSwitcher";
+import { APIService } from "../services/APIServices";
 
 const RegisterForm: React.FC = () => {
     const [username, setUsername] = useState("");
@@ -57,23 +57,32 @@ const RegisterForm: React.FC = () => {
         setIsLoading(true);
 
         try {
-            const response = await axios.post(API_ENDPOINTS.AUTH_REGISTER, {
-                username,
-                email,
-                password,
-            });
+            APIService.registerApi(
+                { username, email, password },
+                (response, error) => {
+                    if (error) {
+                        const message = error.response?.data?.error || "Registration failed.";
+                        dispatch(registerFailure(message));
+                        return;
+                    }
 
-            localStorage.setItem("accessToken", response.data.access_token);
-            localStorage.setItem("refreshToken", response.data.refresh_token);
+                    if (response) {
+                        // Lưu token vào localStorage
+                        localStorage.setItem("accessToken", response.access_token);
+                        localStorage.setItem("refreshToken", response.refresh_token);
 
-            dispatch(
-                registerSuccess({
-                    username: response.data.username,
-                    token: response.data.access_token,
-                })
+                        // Cập nhật Redux store
+                        dispatch(
+                            registerSuccess({
+                                username: response.username,
+                                token: response.access_token,
+                            })
+                        );
+
+                        router.push("/chat/info"); // Điều hướng sau khi đăng ký thành công
+                    }
+                }
             );
-
-            router.push("/chat/info"); // Chuyển về trang Login sau khi đăng ký thành công
         } catch (err: unknown) {
             if (axios.isAxiosError(err) && err.response) {
                 dispatch(registerFailure(err.response.data?.error || "Registration failed"));

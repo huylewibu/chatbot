@@ -9,26 +9,38 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { addChat, removeChat } from "../store/chatSlice/chatSlice";
-import { v4 as uuidv4 } from "uuid";
 import { RootState } from "../store/app";
+import { APIService } from "../services/APIServices";
+import { v4 as uuidv4 } from "uuid";
 
-interface SidebarProps {
-    isOpen: boolean;
-    toggleSidebar: () => void;
-}
-
-const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
+const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
     const dispatch = useDispatch();
     const navigate = useRouter();
     const { data } = useSelector((state: RootState) => state.chat);
 
     const handleNewChat = () => {
-        const newChat = {
-            id: uuidv4(),
-            title: "New chat",
-            messages: [],
-        };
-        dispatch(addChat(newChat));
+        // Gọi API từ backend
+        APIService.addChatApi(
+            { title: "New chat" }, 
+            (response, error) => {
+                if (error) {
+                    console.error("Error creating chat:", error.message);
+                    return;
+                }
+
+                if (response) {
+                    console.log("response: ", response)
+                    const newChat = {
+                        id: uuidv4(),
+                        title: response.chat.title,
+                        messages: [],
+                        idDb: response.chat.id
+                    };
+                    dispatch(addChat(newChat)); 
+                    navigate.push(`/chat/${newChat.id}`);
+                }
+            }
+        );
     };
 
     const handleRemoveChat = (id: string) => {

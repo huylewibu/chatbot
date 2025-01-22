@@ -11,14 +11,22 @@ const Home = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem("accessToken");
-
       // Kiểm tra token và xác thực
-      if (token && isAuthenticated()) {
-        router.push("/chat/info");
-      } else {
-        setLoading(false); // Hiển thị LoginForm
+      try {
+        const token = localStorage.getItem("accessToken");
+
+        if (token) {
+          const authStatus = await isAuthenticated(); // Nếu là hàm bất đồng bộ
+          if (authStatus) {
+            router.push("/chat/info"); // Nếu đã đăng nhập, chuyển hướng
+            return;
+          }
+        }
+      } catch (error) {
+        console.error("Error checking authentication:", error);
       }
+      // Nếu không có token hoặc xác thực thất bại
+      setLoading(false);
     };
 
     checkAuth();

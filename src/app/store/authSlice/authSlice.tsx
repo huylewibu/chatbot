@@ -1,8 +1,7 @@
 import { clearAuthData } from "@/app/services/authService";
-import { AuthState } from "@/types/chat";
 import { createSlice } from "@reduxjs/toolkit";
 
-const initialState: AuthState = {
+const initialState: Interfaces.AuthState = {
   isAuthenticated: typeof window !== "undefined" && !!localStorage.getItem("accessToken"),
   user: typeof window !== "undefined" ? JSON.parse(localStorage.getItem("user") || "null") : null,
   error: "",

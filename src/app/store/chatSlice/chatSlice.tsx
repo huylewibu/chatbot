@@ -2,9 +2,8 @@ import { createSlice } from "@reduxjs/toolkit";
 import { v4 as uuidv4 } from "uuid";
 import { marked } from "marked";
 import DOMPurify  from "dompurify";
-import { ChatState } from "@/types/chat";
 
-const initData: ChatState = {
+const initData: Interfaces.ChatState = {
     data: [],
 };
 
@@ -16,7 +15,8 @@ const chatSlice = createSlice({
             const newChat = action.payload || {
                 id: uuidv4(),
                 title: "Chat",
-                messages: []
+                messages: [],
+                idDb: null
             }
             state.data.push(newChat)
         },
@@ -40,6 +40,9 @@ const chatSlice = createSlice({
                 chat.messages = newMessage;
                 state.data = [...state.data]
             }
+        },
+        loadChat: (state, action) => {
+            state.data = action.payload;
         },
         removeChat: (state, action) => {
             state.data = state.data.filter((chat) => chat.id !== action.payload);

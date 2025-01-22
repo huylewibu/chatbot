@@ -21,7 +21,6 @@ const UserInfo: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-background-light text-text-light dark:bg-background-dark dark:text-text-dark">
-
       <div className="absolute top-4 right-4 flex items-center space-x-4">
         <ThemeSwitcher />
         <p className="text-sm font-medium">

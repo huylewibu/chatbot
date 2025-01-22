@@ -3,11 +3,11 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import axios from "axios";
-import API_ENDPOINTS from "../api/apiEndpoints";
 import { loginSuccess, loginFailure } from "../store/authSlice/authSlice";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import ThemeSwitcher from "./ThemeSwitcher";
+import { APIService } from "../services/APIServices";
 
 const LoginForm: React.FC = () => {
     const [username, setUsername] = useState("");
@@ -24,18 +24,34 @@ const LoginForm: React.FC = () => {
         setIsLoading(true);
 
         try {
-            const response = await axios.post(API_ENDPOINTS.AUTH_TOKEN, { username, password });
-            localStorage.setItem("accessToken", response.data.access);
-            localStorage.setItem("refreshToken", response.data.refresh);
+            APIService.getAuthToken(
+                { username, password },
+                (response, error) => {
+                    if (error) {
+                        console.log(error);
+                        const message =
+                            error.response?.data?.detail || "Invalid username or password!";
+                        setError(message);
+                        dispatch(loginFailure(message));
+                        setIsLoading(false);
+                        return;
+                    }
 
-            const userInfo = {
-                username: response.data.username,
-                email: response.data.email,
-                last_login: response.data.last_login
-            };
-            dispatch(loginSuccess(userInfo));
+                    if (response) {
+                        localStorage.setItem("accessToken", response.access);
+                        localStorage.setItem("refreshToken", response.refresh);
+                        const userInfo = {
+                            username: response.username,
+                            email: response.email,
+                            last_login: response.last_login,
+                        };
 
-            router.push("/chat/info"); // Điều hướng sau khi login
+                        dispatch(loginSuccess(userInfo));
+
+                        router.push("/chat/info"); // Điều hướng sau khi login
+                    }
+                }
+            );
         } catch (err) {
             if (axios.isAxiosError(err)) {
                 const message =
