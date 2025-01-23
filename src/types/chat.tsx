@@ -24,7 +24,7 @@ declare namespace Interfaces {
             updated_at: string,
         }
     }
-    
+
     interface Chat {
         id: string;
         title: string;
@@ -97,7 +97,11 @@ declare namespace Interfaces {
 
     interface ChatResponse {
         user_message: string;
-        bot_response: string;
+        bot_response: {
+            message: string
+            chat_id: string | number
+            chat_history: []
+        };
     }
 
     // API Rename Chat

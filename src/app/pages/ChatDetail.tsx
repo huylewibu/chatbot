@@ -32,8 +32,8 @@ export const ChatDetail = () => {
         state.chat.data.find((chat: any) => chat.id === id)?.messages || []
     )
 
-    const currentIdDb = useSelector((state: RootState) => 
-        state.chat.data.find((chat: any) => chat.id === id)?.idDb
+    const currentIdDb = useSelector((state: RootState) =>
+        state.chat.data.find((chat: any) => chat.id === id)?.id
     )
 
     const handleEditClick = (messageId: string, currentText: string) => {
@@ -68,7 +68,7 @@ export const ChatDetail = () => {
                             }
 
                             // Xử lý phản hồi từ bot
-                            const botResponse = data?.bot_response || "Không nhận được phản hồi từ bot.";
+                            const botResponse = data?.bot_response.message || "Không nhận được phản hồi từ bot.";
                             // Kiểm tra nếu `botResponse` là object, chuyển đổi thành chuỗi
                             const botResponseText = typeof botResponse === "string" ? botResponse : JSON.stringify(botResponse);
                             const botResponseHTML = DOMPurify.sanitize(await marked.parse(botResponseText));
@@ -113,16 +113,17 @@ export const ChatDetail = () => {
 
                     if (response) {
                         // Lấy ID từ API trả về
-                        chatId = uuidv4();
-                        const newChat = {
+                        chatId = response.chat.id;
+
+                        // Thêm chat vào Redux store
+                        dispatch(addChat({
                             id: chatId,
                             title: response.chat.title,
-                            messages: [], // Chưa có tin nhắn ban đầu
-                            idDb: response.chat.id
-                        };
+                            messages: [],
+                        }));
 
                         // Thêm chat mới vào Redux store
-                        dispatch(addChat(newChat));
+                        // dispatch(addChat(newChat));
 
                         APIService.renameChatApi(
                             { chat_id: response.chat.id, message: userMessage },
@@ -177,7 +178,7 @@ export const ChatDetail = () => {
                         setIsLoading(false);
                         return;
                     }
-                    const botResponse = response?.bot_response || "Không nhận được phản hồi từ bot.";
+                    const botResponse = response?.bot_response.message || "Không nhận được phản hồi từ bot.";
                     const botResponseHTML = DOMPurify.sanitize(await marked.parse(botResponse));
                     dispatch(
                         addMessage({
@@ -202,7 +203,6 @@ export const ChatDetail = () => {
         if (!editMode.text.trim()) return;
 
         const chatId = Array.isArray(idChat) ? idChat[0] : idChat;
-
         try {
             const payload = {
                 chat_id: chatId,
@@ -215,6 +215,7 @@ export const ChatDetail = () => {
             };
 
             APIService.updateMessageApi(payload, (response, error) => {
+                console.log("response: ", response);
                 if (error) {
                     console.error("Error updating message:", error);
                     return;

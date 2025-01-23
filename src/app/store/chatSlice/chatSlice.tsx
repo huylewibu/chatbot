@@ -37,6 +37,7 @@ const chatSlice = createSlice({
                         isTyping: true // Đánh dấu trạng thái đang gõ
                     },
                 ]
+                console.log(newMessage)
                 chat.messages = newMessage;
                 state.data = [...state.data]
             }

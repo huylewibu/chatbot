@@ -11,7 +11,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { addChat, removeChat } from "../store/chatSlice/chatSlice";
 import { RootState } from "../store/app";
 import { APIService } from "../services/APIServices";
-import { v4 as uuidv4 } from "uuid";
 
 const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
     const dispatch = useDispatch();
@@ -31,10 +30,9 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
                 if (response) {
                     console.log("response: ", response)
                     const newChat = {
-                        id: uuidv4(),
+                        id: response.chat.id,
                         title: response.chat.title,
                         messages: [],
-                        idDb: response.chat.id
                     };
                     dispatch(addChat(newChat)); 
                     navigate.push(`/chat/${newChat.id}`);
