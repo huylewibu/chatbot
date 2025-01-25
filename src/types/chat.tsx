@@ -1,14 +1,16 @@
-declare namespace Interfaces {
+declare module Interfaces {
     interface HandelErrors {
-        code: string,
-        message: string,
+        code: string
+        message: string
         response?: ResponseError
     }
 
     interface ResponseError {
         data: {
-            detail: string,
+            detail: string
             error: string
+            code: string
+            message: string
         }
     }
 
@@ -17,25 +19,25 @@ declare namespace Interfaces {
     }
 
     interface AddMessageRequest {
-        chat_id: string;
-        message: string;
-        is_bot?: boolean;
+        chat_id: string
+        message: string
+        is_bot?: boolean
     }
 
     interface AddChatResponse {
-        message: string;
+        message: string
         chat: {
-            id: string,
-            title: string,
-            username: string;
-            created_at: string,
-            updated_at: string,
+            id: string
+            title: string
+            username: string
+            created_at: string
+            updated_at: string
         }
     }
 
     interface Chat {
-        id: string;
-        title: string;
+        id: string
+        title: string
     }
 
     interface MessageDetail {
