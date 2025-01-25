@@ -6,15 +6,15 @@ import IconStar from "../assets/star.png";
 import Image from "next/image";
 import Sidebar from "../components/Sidebar";
 import { useParams, useRouter } from "next/navigation";
-import { v4 as uuidv4 } from "uuid";
 import './ChatDetail.css';
-import { use, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
 import { useDispatch, useSelector } from "react-redux";
 import { addChat, addMessage, setNameChat, updateMessage } from "../store/chatSlice/chatSlice";
 import { RootState } from "../store/app";
 import { APIService } from "../services/APIServices";
+import { Params } from "next/dist/server/request/params";
 
 export const ChatDetail = () => {
     const [inputChat, setInputChat] = useState<string>("");
@@ -22,18 +22,18 @@ export const ChatDetail = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
     const [editMode, setEditMode] = useState<Interfaces.EditMode>({ isEditing: false, messageId: "", text: "" });
 
-    const { id } = useParams();
+    const { id } = useParams<Params>();
     const router = useRouter();
     const dispatch = useDispatch();
 
     const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
     const messageDetail: Interfaces.MessageDetail[] = useSelector((state: RootState) =>
-        state.chat.data.find((chat: any) => chat.id === id)?.messages || []
+        state.chat.data.find((chat) => chat.id === id)?.messages || []
     )
 
     const currentIdDb = useSelector((state: RootState) =>
-        state.chat.data.find((chat: any) => chat.id === id)?.id
+        state.chat.data.find((chat) => chat.id === id)?.id
     )
 
     const handleEditClick = (messageId: string, currentText: string) => {

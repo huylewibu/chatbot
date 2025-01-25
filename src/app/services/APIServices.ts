@@ -48,14 +48,14 @@ export const APIService = {
     // Gọi API lấy token đăng nhập
     getAuthToken(
         data: Interfaces.AuthTokenRequest,
-        completion: (data: Interfaces.AuthTokenResponse | null, error: any) => void
+        completion: (data: Interfaces.AuthTokenResponse | null, error: Interfaces.HandelErrors | null) => void
     ) {
         APIClient.post("/api/auth/token", data, completion);
     },
 
     // Gọi API lấy thông tin người dùng
     getUserInfo(
-        completion: (data: Interfaces.UserInfoResponse | null, error: any) => void
+        completion: (data: Interfaces.UserInfoResponse | null, error: Interfaces.HandelErrors | null) => void
     ) {
         APIClient.get("/api/auth/info", completion); // Sử dụng APIClient.get
     },

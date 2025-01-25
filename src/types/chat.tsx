@@ -1,7 +1,15 @@
 declare namespace Interfaces {
     interface HandelErrors {
         code: string,
-        message: string
+        message: string,
+        response?: ResponseError
+    }
+
+    interface ResponseError {
+        data: {
+            detail: string,
+            error: string
+        }
     }
 
     interface AddChatRequest {
@@ -85,7 +93,7 @@ declare namespace Interfaces {
     }
 
     interface ChatRequest {
-        chat_id: number | any;
+        chat_id: string | string[];
         message: string;
         chat_history: ChatHistoryRequest[];
     }

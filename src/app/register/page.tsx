@@ -166,7 +166,7 @@ const RegisterForm: React.FC = () => {
                     </div>
                     {error && (
                         <div className="text-sm text-red-500 bg-red-100 p-3 rounded-md">
-                            {error}
+                            {typeof error === "string" && error}
                         </div>
                     )}
                     <button
