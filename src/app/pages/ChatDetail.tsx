@@ -8,7 +8,7 @@ import Sidebar from "../components/Sidebar";
 import { useParams, useRouter } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 import './ChatDetail.css';
-import { useEffect, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
 import { useDispatch, useSelector } from "react-redux";
@@ -40,7 +40,6 @@ export const ChatDetail = () => {
         setEditMode({ isEditing: true, messageId, text: currentText });
     };
 
-
     // Xử lý câu hỏi ban đầu nếu có `question` trong query string
     useEffect(() => {
         const initChat = async () => {
@@ -49,10 +48,10 @@ export const ChatDetail = () => {
             const queryParams = new URLSearchParams(window.location.search);
             const initialQuestion = queryParams.get("question");
             if (initialQuestion) {
-                console.log("initialQuestion: ", id);
                 try {
                     setIsLoading(true);
-                    APIService.chatApi(
+
+                    await APIService.chatApi(
                         {
                             chat_id: id, // Thêm `chat_id` vào payload
                             message: initialQuestion,
@@ -73,12 +72,13 @@ export const ChatDetail = () => {
                             const botResponseText = typeof botResponse === "string" ? botResponse : JSON.stringify(botResponse);
                             const botResponseHTML = DOMPurify.sanitize(await marked.parse(botResponseText));
                             // Cập nhật Redux store
-                            dispatch(
+                            await dispatch(
                                 addMessage({
                                     idChat: id,
                                     userMess: initialQuestion,
                                     botMess: botResponseHTML,
-                                    botMessageId: uuidv4(),
+                                    botMessageId: data?.bot_response.id,
+                                    userMessageId: data?.user_message.id,
                                 })
                             );
                         }
@@ -88,6 +88,7 @@ export const ChatDetail = () => {
                 }
             }
         };
+
         initChat();
 
     }, [id, dispatch]);
@@ -185,7 +186,8 @@ export const ChatDetail = () => {
                             idChat: chatId,
                             userMess: userMessage,
                             botMess: botResponseHTML,
-                            botMessageId: uuidv4(),
+                            botMessageId: response?.bot_response.id,
+                            userMessageId: response?.user_message.id,
                         })
                     );
                 }
@@ -211,11 +213,11 @@ export const ChatDetail = () => {
                 chat_history: messageDetail.map((msg) => ({
                     role: msg.isBot ? "assistant" : "user",
                     content: msg.text,
+                    message_id: msg.id,
                 })),
             };
 
             APIService.updateMessageApi(payload, (response, error) => {
-                console.log("response: ", response);
                 if (error) {
                     console.error("Error updating message:", error);
                     return;

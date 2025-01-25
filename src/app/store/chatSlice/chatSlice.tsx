@@ -21,14 +21,14 @@ const chatSlice = createSlice({
             state.data.push(newChat)
         },
         addMessage: (state, action) => {
-            const {idChat, userMess, botMess, botMessageId} = action.payload
+            const {idChat, userMess, botMess, botMessageId, userMessageId} = action.payload
             const chat = state.data.find((chat) => chat.id === idChat)
             if (chat) {
                 const messageFormat = marked.parse(botMess) as string
                 const safeChat = DOMPurify.sanitize(messageFormat)
                 const newMessage = [
                     ...chat.messages,
-                    {id: uuidv4(), text: userMess, isBot: false},
+                    {id: userMessageId, text: userMess, isBot: false},
                     { 
                         id: botMessageId, 
                         text: "", // Bắt đầu với nội dung rỗng
@@ -37,7 +37,6 @@ const chatSlice = createSlice({
                         isTyping: true // Đánh dấu trạng thái đang gõ
                     },
                 ]
-                console.log(newMessage)
                 chat.messages = newMessage;
                 state.data = [...state.data]
             }

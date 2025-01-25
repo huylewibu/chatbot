@@ -92,15 +92,21 @@ declare namespace Interfaces {
 
     interface ChatHistoryRequest {
         role: string;
-        content: string
+        content: string;
     }
 
     interface ChatResponse {
-        user_message: string;
+        user_message: {
+            created_at: string;
+            id: string;
+            message: string;
+            is_bot: boolean;
+        };
         bot_response: {
-            message: string
-            chat_id: string | number
-            chat_history: []
+            message: string;
+            id: string;
+            is_bot: boolean;
+            created_at: string;
         };
     }
 
