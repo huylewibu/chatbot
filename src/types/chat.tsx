@@ -1,4 +1,4 @@
-declare module Interfaces {
+declare namespace Interfaces {
     interface HandelErrors {
         code: string
         message: string
