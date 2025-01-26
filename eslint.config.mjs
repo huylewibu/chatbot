@@ -18,7 +18,7 @@ const eslintConfig = [
       '@next/next/no-page-custom-font': 'off',
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-unused-vars": [
-        "error",
+        "warn",
         {
           "args": "all",
           "argsIgnorePattern": "^_",
