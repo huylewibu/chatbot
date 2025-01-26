@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 declare namespace Interfaces {
     interface HandelErrors {
         code: string
@@ -177,6 +178,4 @@ declare namespace Interfaces {
         email: string;
         last_login: string;
     }
-
-
 }
