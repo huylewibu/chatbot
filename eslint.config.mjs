@@ -14,6 +14,8 @@ const eslintConfig = [
   {
     rules: {
       "@typescript-eslint/no-namespace": "off", // Tắt lỗi namespace
+      'react/no-unescaped-entities': 'off',
+      '@next/next/no-page-custom-font': 'off',
     },
   },
 ];
