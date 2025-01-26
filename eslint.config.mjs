@@ -16,6 +16,19 @@ const eslintConfig = [
       "@typescript-eslint/no-namespace": "off", // Tắt lỗi namespace
       'react/no-unescaped-entities': 'off',
       '@next/next/no-page-custom-font': 'off',
+      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          "args": "all",
+          "argsIgnorePattern": "^_",
+          "caughtErrors": "all",
+          "caughtErrorsIgnorePattern": "^_",
+          "destructuredArrayIgnorePattern": "^_",
+          "varsIgnorePattern": "^_",
+          "ignoreRestSiblings": true
+        }
+      ]
     },
   },
 ];
