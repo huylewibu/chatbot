@@ -105,7 +105,7 @@ export const ChatDetail = () => {
             let chatId = id;
             if (!chatId) {
                 // Tạo cuộc trò chuyện mới
-                APIService.addChatApi({ title: "New chat" }, (response, error) => {
+                await APIService.addChatApi({ title: "New chat" }, (response, error) => {
                     if (error) {
                         console.error("Error creating chat:", error.message);
                         setIsLoading(false);
@@ -129,6 +129,7 @@ export const ChatDetail = () => {
                         APIService.renameChatApi(
                             { chat_id: response.chat.id, message: userMessage },
                             (renameResponse, renameError) => {
+                                console.log("renameResponse: ", renameResponse);
                                 if (renameError) {
                                     console.log("Error renaming chat:", renameError.message);
                                     return;

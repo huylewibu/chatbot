@@ -1,3 +1,4 @@
+/* eslint-disable */
 import APIClient from '../api/apiEndpoints'
 
 export const APIService = {
