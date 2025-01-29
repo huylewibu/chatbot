@@ -31,35 +31,6 @@ li {
     justify-content: flex-end; /* Đưa tin nhắn sang bên phải */
 }
 
-.message.user {
-    background: linear-gradient(90deg, #4caf50, #81c784); /* Gradient xanh lá */
-    color: white; /* Màu chữ */
-    border-radius: 20px; /* Bo góc */
-    padding: 10px 15px; /* Khoảng cách trong */
-    max-width: calc(80% - 10px); /* Giới hạn chiều rộng tin nhắn */
-    width: fit-content; /* Chiều rộng vừa với nội dung */
-    text-align: right; /* Căn chữ bên phải */
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); /* Đổ bóng mềm mại */
-    font-size: 14px; /* Kích thước chữ */
-    font-weight: 500; /* Độ đậm chữ */
-    line-height: 1.5; /* Khoảng cách giữa các dòng */
-    position: relative; /* Để tạo hiệu ứng mũi tên */
-    margin-right: 10px; /* Khoảng cách với mép phải */
-}
-
-/* Hiệu ứng mũi tên cho tin nhắn user */
-.message.user::after {
-    content: "";
-    position: absolute;
-    top: 50%; /* Căn giữa theo chiều dọc */
-    transform: translateY(-50%); /* Đảm bảo mũi tên nằm chính giữa */
-    right: -10px; /* Vị trí ngang của mũi tên */
-    width: 0;
-    height: 0;
-    border-style: solid;
-    border-width: 10px 0 10px 10px; /* Kích thước mũi tên */
-    border-color: transparent transparent transparent #4caf50; /* Màu nền của mũi tên */
-}
 
 /* Tin nhắn của bot */
 .message-container.bot {

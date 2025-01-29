@@ -6,7 +6,7 @@ import IconStar from "../assets/star.png";
 import Image from "next/image";
 import Sidebar from "../components/Sidebar";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
 import { useDispatch, useSelector } from "react-redux";
@@ -21,6 +21,8 @@ export const ChatDetail = () => {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
     const [editMode, setEditMode] = useState<Interfaces.EditMode>({ isEditing: false, messageId: "", text: "" });
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLTextAreaElement>(null);
 
     const { id } = useParams<Params>();
     const router = useRouter();
@@ -39,6 +41,16 @@ export const ChatDetail = () => {
         setEditMode({ isEditing: true, messageId, text: currentText });
     };
 
+    const scrollToBottom = () => {
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+    };
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messageDetail]);
+
     // Xử lý câu hỏi ban đầu nếu có `question` trong query string
     useEffect(() => {
         const initChat = async () => {
@@ -52,9 +64,9 @@ export const ChatDetail = () => {
 
                     APIService.chatApi(
                         {
-                            chat_id: id, 
+                            chat_id: id,
                             message: initialQuestion,
-                            chat_history: [], 
+                            chat_history: [],
                         },
 
                         async (data, error) => {
@@ -96,7 +108,7 @@ export const ChatDetail = () => {
         setIsLoading(true);
 
         const userMessage = inputChat.trim();
-        setInputChat(""); 
+        setInputChat("");
 
         try {
             let chatId = id;
@@ -126,7 +138,7 @@ export const ChatDetail = () => {
                                         console.log("Error renaming chat:", renameError.message);
                                         return;
                                     }
-    
+
                                     // Cập nhật Redux store với tiêu đề mới
                                     const newTitle = renameResponse?.chat_name;
                                     dispatch(setNameChat({ newTitle, chatId }));
@@ -237,10 +249,7 @@ export const ChatDetail = () => {
 
     return (
         <div className="relative flex w-[100%]">
-            {/* Sidebar */}
             <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-
-            {/* Nút mở Sidebar */}
             <button
                 className={`fixed top-4 left-4 z-50 bg-gray-700 rounded-lg xl:hidden ${isSidebarOpen ? "hidden" : "block"
                     }`}
@@ -313,16 +322,29 @@ export const ChatDetail = () => {
                                                         </button>
                                                     </div>
                                                 ) : (
-                                                    <div className="flex items-center space-x-2">
-                                                        <p>{item.text}</p>
-                                                        <button
-                                                            onClick={() =>
-                                                                handleEditClick(item.id, item.text)
-                                                            }
-                                                            className="text-blue-500"
-                                                        >
-                                                            ✏️
-                                                        </button>
+                                                    <div className="relative flex w-full min-w-0 flex-col">
+                                                        <div className="flex-col gap-1 md:gap-3">
+                                                            <div className="flex max-w-full flex-col flex-grow">
+                                                                <div className="text-message flex w-full flex-col item-end gap-2 whitespace-normal break-words text-start">
+                                                                    <div className="flex w-full flex-col gap-1 empty:hidden items-end">
+                                                                        <div className="relative max-w-[70%] rounded-3xl bg-[rgba(50,50,50,0.85)] px-5 py-2.5 rounded-tr-lg">
+                                                                            <div className="whitespace-pre-wrap text-sm">
+                                                                                {DOMPurify.sanitize(marked.parse(item.text || "") as string)}
+                    
+                                                                            </div>
+                                                                        </div>
+                                                                        <button
+                                                                            onClick={() =>
+                                                                                handleEditClick(item.id, item.text)
+                                                                            }
+                                                                            className="text-blue-500"
+                                                                        >
+                                                                            ✏️
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 )}
                                             </>
@@ -330,6 +352,7 @@ export const ChatDetail = () => {
                                     </div>
                                 </div>
                             ))}
+                            <div ref={messagesEndRef} />
                         </div>
                     ) : (
                         <div className="flex flex-col space-y-5">
@@ -361,20 +384,31 @@ export const ChatDetail = () => {
                         </div>
                     )}
                     <div className="flex items-center space-x-4 w-full">
-                        <input
-                            type="text"
-                            value={inputChat}
-                            placeholder="Nhập câu hỏi tại đây"
-                            className="p-4 rounded-lg bg-background text-black dark:text-white dark:bg-gray-800 w-[90%] border dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400"
-                            onChange={(e) => setInputChat(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                    e.preventDefault();
-                                    handleChatDetail();
-                                }
-                            }}
-                            disabled={isLoading}
-                        />
+                        <div className="flex flex-col-reverse w-full">
+                            <textarea
+                                ref={inputRef}
+                                rows={1}
+                                value={inputChat}
+                                placeholder="Nhập câu hỏi tại đây"
+                                className="p-4 rounded-lg bg-background text-black 
+                            dark:text-white dark:bg-gray-800 w-[90%] max-h-[300px]
+                            dark:border-gray-600 placeholder-gray-500 border
+                            dark:placeholder-gray-400 resize-none overflow-y-auto 
+                            break-words"
+                                onChange={(e) => {
+                                    setInputChat(e.target.value);
+                                    e.target.style.height = "auto";
+                                    e.target.style.height = `${e.target.scrollHeight}px`;
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter" && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleChatDetail();
+                                    }
+                                }}
+                                disabled={isLoading}
+                            />
+                        </div>
                         <button
                             className={`p-4 rounded-lg bg-green-500 text-white flex items-center justify-center ${isLoading ? "loading" : ""}`}
                             onClick={handleChatDetail}
