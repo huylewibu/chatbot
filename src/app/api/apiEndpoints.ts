@@ -26,7 +26,20 @@ const APIClient = {
       completion(null, normalizeError(error));
     }
   },
+  delete: async (
+    url: string,
+    completion: (data: any, error: Interfaces.HandelErrors | null) => void
+  ) => {
+    try {
+      const response = await axiosInstance.delete(url);
+      completion(response.data, null);
+    } catch (error: unknown) {
+      completion(null, normalizeError(error));
+    }
+  },
 };
+
+
 
 function isHandelErrors(error: unknown): error is Interfaces.HandelErrors {
   return (

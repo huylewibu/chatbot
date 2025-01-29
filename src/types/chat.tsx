@@ -36,6 +36,33 @@ declare namespace Interfaces {
         }
     }
 
+    interface LoadChatResponse {
+        chats: {
+            id: string
+            title: string
+            updated_at: string
+            messages: string[]
+        }[]
+    }
+
+    interface MessagesResponse {
+        chat: {
+            id: string,
+            title: string,
+            created_at: string,
+            updated_at: string,
+        }
+        message_data: MessageData[]
+    }
+
+    interface MessageData {
+        id: string,
+        message: string,
+        is_bot: boolean,
+        sequence: number,
+        created_at: string
+    }
+
     interface Chat {
         id: string
         title: string
@@ -47,6 +74,7 @@ declare namespace Interfaces {
         isBot: boolean;
         isTyping?: boolean;
         pendingMessage?: string;
+        sequence?: number;
     }
 
     interface SidebarProps {
@@ -70,6 +98,10 @@ declare namespace Interfaces {
         isEditing: boolean;
         messageId: string;
         text: string;
+    }
+
+    interface RemoveChatResponse {
+        message: string
     }
 
     interface Login {

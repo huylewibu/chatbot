@@ -31,9 +31,8 @@ const chatSlice = createSlice({
                     {id: userMessageId, text: userMess, isBot: false},
                     { 
                         id: botMessageId, 
-                        text: "", // Bắt đầu với nội dung rỗng
+                        text: safeChat, // Bắt đầu với nội dung rỗng
                         isBot: true, 
-                        pendingMessage: safeChat, // Lưu câu trả lời đầy đủ
                         isTyping: true // Đánh dấu trạng thái đang gõ
                     },
                 ]
@@ -43,6 +42,14 @@ const chatSlice = createSlice({
         },
         loadChat: (state, action) => {
             state.data = action.payload;
+        },
+        setMessages: (state, action) => {
+            const {chatId, messages} = action.payload
+            const chat = state.data.find((chat) => chat.id === chatId)
+            if (chat) {
+                chat.id = chatId;
+                chat.messages = messages;
+            }
         },
         removeChat: (state, action) => {
             state.data = state.data.filter((chat) => chat.id !== action.payload);
@@ -67,7 +74,7 @@ const chatSlice = createSlice({
         
                     // Tìm tin nhắn bot ngay sau tin nhắn user
                     if (messages[index - 1]?.id === messageId && msg.isBot) {
-                        return { ...msg, pendingMessage: botResponse };
+                        return { ...msg, text: botResponse };
                     }
         
                     return msg;
@@ -83,6 +90,6 @@ const chatSlice = createSlice({
     }
 })
 
-export const { addChat, removeChat, addMessage, setNameChat, updateMessage } = chatSlice.actions;
+export const { addChat, removeChat, addMessage, setNameChat, updateMessage, loadChat, setMessages } = chatSlice.actions;
 
 export default chatSlice.reducer

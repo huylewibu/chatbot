@@ -6,15 +6,15 @@ import IconStar from "../assets/star.png";
 import Image from "next/image";
 import Sidebar from "../components/Sidebar";
 import { useParams, useRouter } from "next/navigation";
-import './ChatDetail.css';
 import { useEffect, useState } from "react";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
 import { useDispatch, useSelector } from "react-redux";
 import { addChat, addMessage, setNameChat, updateMessage } from "../store/chatSlice/chatSlice";
-import { RootState } from "../store/app";
+import { RootState, selectChatById } from "../store/app";
 import { APIService } from "../services/APIServices";
 import { Params } from "next/dist/server/request/params";
+import './ChatDetail.css';
 
 export const ChatDetail = () => {
     const [inputChat, setInputChat] = useState<string>("");
@@ -28,13 +28,12 @@ export const ChatDetail = () => {
 
     const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
-    const messageDetail: Interfaces.MessageDetail[] = useSelector((state: RootState) =>
-        state.chat.data.find((chat) => chat.id === id)?.messages || []
-    )
+    const currentChatMessage = useSelector((state: RootState) => selectChatById(state, id));
+    const messageDetail = currentChatMessage?.messages || [];
 
-    const currentIdDb = useSelector((state: RootState) =>
-        state.chat.data.find((chat) => chat.id === id)?.id
-    )
+    const currentChat = useSelector((state: RootState) =>
+        state.chat.data.find((chat) => chat.id === id)
+    );
 
     const handleEditClick = (messageId: string, currentText: string) => {
         setEditMode({ isEditing: true, messageId, text: currentText });
@@ -51,28 +50,26 @@ export const ChatDetail = () => {
                 try {
                     setIsLoading(true);
 
-                    await APIService.chatApi(
+                    APIService.chatApi(
                         {
-                            chat_id: id, // Thêm `chat_id` vào payload
+                            chat_id: id, 
                             message: initialQuestion,
-                            chat_history: [], // Lịch sử chat ban đầu là rỗng
+                            chat_history: [], 
                         },
 
                         async (data, error) => {
                             setIsLoading(false);
 
                             if (error) {
-                                console.error("Error processing initial question:", error);
+                                console.log("Error processing initial question:", error);
                                 return;
                             }
 
-                            // Xử lý phản hồi từ bot
                             const botResponse = data?.bot_response.message || "Không nhận được phản hồi từ bot.";
                             // Kiểm tra nếu `botResponse` là object, chuyển đổi thành chuỗi
                             const botResponseText = typeof botResponse === "string" ? botResponse : JSON.stringify(botResponse);
                             const botResponseHTML = DOMPurify.sanitize(await marked.parse(botResponseText));
-                            // Cập nhật Redux store
-                            await dispatch(
+                            dispatch(
                                 addMessage({
                                     idChat: id,
                                     userMess: initialQuestion,
@@ -99,7 +96,7 @@ export const ChatDetail = () => {
         setIsLoading(true);
 
         const userMessage = inputChat.trim();
-        setInputChat(""); // Reset input
+        setInputChat(""); 
 
         try {
             let chatId = id;
@@ -113,33 +110,29 @@ export const ChatDetail = () => {
                     }
 
                     if (response) {
-                        // Lấy ID từ API trả về
                         chatId = response.chat.id;
 
-                        // Thêm chat vào Redux store
                         dispatch(addChat({
                             id: chatId,
                             title: response.chat.title,
                             messages: [],
                         }));
-
-                        // Thêm chat mới vào Redux store
-                        // dispatch(addChat(newChat));
-
-                        APIService.renameChatApi(
-                            { chat_id: response.chat.id, message: userMessage },
-                            (renameResponse, renameError) => {
-                                console.log("renameResponse: ", renameResponse);
-                                if (renameError) {
-                                    console.log("Error renaming chat:", renameError.message);
-                                    return;
+                        setTimeout(() => {
+                            APIService.renameChatApi(
+                                { chat_id: response.chat.id, message: userMessage },
+                                (renameResponse, renameError) => {
+                                    console.log("renameResponse: ", renameResponse);
+                                    if (renameError) {
+                                        console.log("Error renaming chat:", renameError.message);
+                                        return;
+                                    }
+    
+                                    // Cập nhật Redux store với tiêu đề mới
+                                    const newTitle = renameResponse?.chat_name;
+                                    dispatch(setNameChat({ newTitle, chatId }));
                                 }
-
-                                // Cập nhật Redux store với tiêu đề mới
-                                const newTitle = renameResponse?.chat_name || "New chat";
-                                dispatch(setNameChat({ newTitle, chatId }));
-                            }
-                        );
+                            );
+                        }, 5000)
 
                         router.push(`/chat/${chatId}?question=${encodeURIComponent(userMessage)}`);
                     }
@@ -149,17 +142,20 @@ export const ChatDetail = () => {
 
             // Xử lý đổi tên khi đã tạo đoạn chat
             if (messageDetail.length === 0) {
-                APIService.renameChatApi(
-                    { chat_id: currentIdDb, message: userMessage },
-                    (renameResponse, error) => {
-                        if (error) {
-                            console.error("Error renaming chat:", error);
-                            return;
+                setTimeout(() => {
+                    APIService.renameChatApi(
+                        { chat_id: currentChat?.id, message: userMessage },
+                        (renameResponse, error) => {
+                            console.log("rename: ", renameResponse)
+                            if (error) {
+                                console.error("Error renaming chat:", error);
+                                return;
+                            }
+                            const newTitle = renameResponse?.chat_name || "Cuộc trò chuyện mới";
+                            dispatch(setNameChat({ newTitle, chatId }));
                         }
-                        const newTitle = renameResponse?.chat_name || "Cuộc trò chuyện mới";
-                        dispatch(setNameChat({ newTitle, chatId }));
-                    }
-                );
+                    );
+                }, 5000)
             }
 
             const formattedChatHistory = messageDetail.map((msg) => ({
@@ -168,7 +164,7 @@ export const ChatDetail = () => {
             }));
 
             // Gửi tin nhắn đến backend
-            APIService.chatApi(
+            await APIService.chatApi(
                 {
                     chat_id: chatId,
                     message: userMessage,
@@ -176,7 +172,7 @@ export const ChatDetail = () => {
                 },
                 async (response, error) => {
                     if (error) {
-                        console.error("Error sending message:", error);
+                        console.log("Error sending message:", error);
                         setIsLoading(false);
                         return;
                     }
@@ -225,7 +221,6 @@ export const ChatDetail = () => {
                 }
 
                 const { bot_response } = response || {};
-                // Dispatch Redux để cập nhật state
                 dispatch(updateMessage({
                     idChat: chatId,
                     messageId: editMode.messageId,
@@ -268,7 +263,7 @@ export const ChatDetail = () => {
                 <div className="max-w-[90%] w-full mx-auto space-y-10">
                     {id ? (
                         <div className="chat-container flex flex-col space-y-4 p-4 h-[70vh] overflow-x-hidden overflow-y-auto">
-                            {messageDetail.map((item) => (
+                            {messageDetail.length > 0 && messageDetail.slice().sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0)).map((item) => (
                                 <div
                                     className={`message-container ${item.isBot ? "bot" : "user"} mb-3`}
                                     key={item.id} // Key là duy nhất
@@ -279,7 +274,7 @@ export const ChatDetail = () => {
                                                 <Image src={IconStar} alt="star" className="w-8 h-8" />
                                                 <p
                                                     dangerouslySetInnerHTML={{
-                                                        __html: DOMPurify.sanitize(marked.parse(item.pendingMessage || "") as string),
+                                                        __html: DOMPurify.sanitize(marked.parse(item.text || "") as string),
                                                     }}
                                                 ></p>
                                             </>

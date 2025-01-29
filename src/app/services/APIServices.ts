@@ -18,8 +18,24 @@ export const APIService = {
     },
 
     // Load Chat
-    loadChatApi(completion: (data: Interfaces.ChatResponse[] | null, error: Interfaces.HandelErrors | null) => void) {
+    loadChatApi(completion: (data: Interfaces.LoadChatResponse | null, error: Interfaces.HandelErrors | null) => void) {
         APIClient.get("/api/get-chat/", completion);
+    },
+
+    // Get messages by chat
+    getMessagesByChatApi(
+        chatId: string,
+        completion: (data: Interfaces.MessagesResponse | null, error: Interfaces.HandelErrors | null) => void
+    ) {
+        APIClient.get(`/api/get-messages/${chatId}`, completion);
+    },
+
+    // Remove Chat
+    removeChatApi(
+        chatId: string,
+        completion: (data: Interfaces.RemoveChatResponse | null, error: Interfaces.HandelErrors | null) => void
+    ) {
+        APIClient.delete(`/api/chat/remove/${chatId}`, completion);
     },
 
     // Gọi API đổi tên chat

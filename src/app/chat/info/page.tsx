@@ -8,6 +8,7 @@ import { APIService } from "@/app/services/APIServices";
 
 const ChatInfo: React.FC = () => {
     const [userInfo, setUserInfo] = useState<Interfaces.UserInfoResponse | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     const fetchChatInfo = async () => {
         APIService.getUserInfo((data, error) => {
@@ -17,6 +18,7 @@ const ChatInfo: React.FC = () => {
             } else if (data) {
                 setUserInfo(data);
             }
+            setIsLoading(false); 
         });
     };
 
@@ -24,7 +26,7 @@ const ChatInfo: React.FC = () => {
         fetchChatInfo();
     }, []);
 
-    if (!userInfo) {
+    if (isLoading) {
         return (
             <div className="flex items-center justify-center h-screen bg-gray-100">
                 <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent border-solid rounded-full animate-spin"></div>
@@ -34,11 +36,13 @@ const ChatInfo: React.FC = () => {
 
     return (
         <RequireAuth>
-            <UserInfo>
-                <div className="h-screen flex">
-                    <ChatDetail />
-                </div>
-            </UserInfo>
+            {userInfo && (
+                <UserInfo>
+                    <div className="h-screen flex">
+                        <ChatDetail />
+                    </div>
+                </UserInfo>
+            )}
         </RequireAuth>
     );
 };

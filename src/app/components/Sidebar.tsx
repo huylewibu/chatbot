@@ -6,21 +6,63 @@ import IconPlus from "../assets/plusIcon.png";
 import IconChat from "../assets/chat.png";
 import IconTrash from "../assets/remove.png";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import { addChat, removeChat } from "../store/chatSlice/chatSlice";
+import { addChat, loadChat, removeChat, setMessages } from "../store/chatSlice/chatSlice";
 import { RootState } from "../store/app";
 import { APIService } from "../services/APIServices";
+import { useEffect } from "react";
+import { Params } from "next/dist/server/request/params";
 
 const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
     const dispatch = useDispatch();
     const navigate = useRouter();
     const { data } = useSelector((state: RootState) => state.chat);
+    const { id } = useParams<Params>();
+
+    useEffect(() => {
+        if (!id) {
+            APIService.loadChatApi((dataResponse, error) => {
+                if (error) {
+                    console.error("Error loading chats:", error);
+                    return;
+                }
+                if (dataResponse) {
+                    const formattedChats = dataResponse.chats.map((chat) => ({
+                        ...chat,
+                        messages: chat.messages || [],
+                    }));
+                    dispatch(loadChat(formattedChats));
+                }
+            });
+        }
+    }, [id, dispatch]);
+
+    const handleSelectChat = async (chatId: string) => {
+        await APIService.getMessagesByChatApi(chatId, (data, error) => {
+            if (error) {
+                console.error("Error loading messages:", error);
+                return;
+            }
+            if (data) {
+                const formattedMessages = data.message_data.map((message) => ({
+                    chatId,
+                    id: message.id,
+                    text: message.message,
+                    isBot: message.is_bot,
+                    createdAt: message.created_at,
+                    sequence: message.sequence,
+                }));
+                dispatch(setMessages({ chatId, messages: formattedMessages }));
+                navigate.push(`/chat/${chatId}`);
+            }
+        })
+    }
 
     const handleNewChat = () => {
         // Gọi API từ backend
         APIService.addChatApi(
-            { title: "New chat" }, 
+            { title: "New chat" },
             (response, error) => {
                 if (error) {
                     console.error("Error creating chat:", error.message);
@@ -34,7 +76,7 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
                         title: response.chat.title,
                         messages: [],
                     };
-                    dispatch(addChat(newChat)); 
+                    dispatch(addChat(newChat));
                     navigate.push(`/chat/${newChat.id}`);
                 }
             }
@@ -42,8 +84,16 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
     };
 
     const handleRemoveChat = (id: string) => {
-        dispatch(removeChat(id));
-        navigate.push("/");
+        APIService.removeChatApi(id, (response, error) => {
+            if (error) {
+                console.error("Error removing chat:", error);
+                return;
+            }
+            if (response) {
+                dispatch(removeChat(id));
+                navigate.push("/");
+            }
+        })
     };
 
     return (
@@ -70,39 +120,27 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
                     <p>Gần đây:</p>
                     <div className="flex flex-col space-y-6">
                         {data.map((chat) => (
-                            <Link
-                                className="flex items-center justify-between p-4 bg-gray-800 hover:bg-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors duration-300 rounded-md"
-                                key={chat?.id}
-                                href={`/chat/${chat.id}`}
-                            >
+                            <div key={chat?.id} className="flex cursor-pointer items-center justify-between p-4 bg-gray-800 hover:bg-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors duration-300 rounded-md"
+                                onClick={() => handleSelectChat(chat?.id)}>
                                 <div className="flex items-center space-x-4">
-                                    <Image
-                                        src={IconChat}
-                                        alt="chat icon"
-                                        className="w-8 h-8"
-                                    />
+                                    <Image src={IconChat} alt="chat icon" className="w-8 h-8" />
                                     <p className="text-xs text-white">{chat.title}</p>
                                 </div>
-                                <button
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        handleRemoveChat(chat.id);
-                                    }}
-                                >
-                                    <Image
-                                        src={IconTrash}
-                                        alt="trash icon"
-                                        className="w-5 h-5"
-                                    />
+                                <button onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleRemoveChat(chat.id);
+                                }}>
+                                    <Image src={IconTrash} alt="trash icon" className="w-5 h-5" />
                                 </button>
-                            </Link>
+                            </div>
                         ))}
                     </div>
                 </div>
             </div>
         </div>
     );
-};
+}
 
 Sidebar.propTypes = {
     isOpen: PropType.bool.isRequired,
