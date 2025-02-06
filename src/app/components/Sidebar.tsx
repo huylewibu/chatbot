@@ -4,17 +4,20 @@ import PropType from "prop-types";
 import Image from "next/image";
 import IconPlus from "../assets/plusIcon.png";
 import IconChat from "../assets/chat.png";
-import IconTrash from "../assets/remove.png";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import { addChat, loadChat, removeChat, setMessages } from "../store/chatSlice/chatSlice";
+import { addChat, loadChat, removeChat, setMessages, setNameChat } from "../store/chatSlice/chatSlice";
 import { RootState } from "../store/app";
 import { APIService } from "../services/APIServices";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { BsThreeDotsVertical } from "react-icons/bs";
 import { Params } from "next/dist/server/request/params";
 
 const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
+    const [menuOpen, setMenuOpen] = useState<string | null>(null);
+    const [editingChatId, setEditingChatId] = useState<string | null>(null);
+    const [newTitle, setNewTitle] = useState<string>("");
     const dispatch = useDispatch();
     const navigate = useRouter();
     const { data } = useSelector((state: RootState) => state.chat);
@@ -37,6 +40,30 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
             });
         }
     }, [id, dispatch]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuOpen) {
+                const menuButton = document.querySelector(`[data-menu-id="${menuOpen}"]`);
+                const menuDropdown = document.querySelector(`[data-dropdown-id="${menuOpen}"]`);
+
+                if (
+                    menuButton &&
+                    !menuButton.contains(event.target as Node) &&
+                    menuDropdown &&
+                    !menuDropdown.contains(event.target as Node)
+                ) {
+                    setMenuOpen(null);
+                }
+            }
+        };
+
+        document.addEventListener("click", handleClickOutside);
+
+        return () => {
+            document.removeEventListener("click", handleClickOutside);
+        };
+    }, [menuOpen]);
 
     const handleSelectChat = async (chatId: string) => {
         await APIService.getMessagesByChatApi(chatId, (data, error) => {
@@ -83,6 +110,33 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
         );
     };
 
+    const startRename = (chatId: string, currentTitle: string) => {
+        setEditingChatId(chatId);
+        setNewTitle(currentTitle); // Điền tên hiện tại vào input
+    };
+
+    // Lưu tên chat mới
+    const saveRename = (chatId: string) => {
+        if (!newTitle.trim()) {
+            setEditingChatId(null); // Nếu tên trống, hủy chỉnh sửa
+            return;
+        }
+
+        APIService.renameChatApi(
+            { chat_id: chatId, message: undefined, new_title: newTitle.trim() },
+            (response, error) => {
+                if (error) {
+                    console.error("Error renaming chat:", error);
+                    return;
+                }
+                if (response) {
+                    dispatch(setNameChat({ newTitle: newTitle.trim(), chatId })); // Cập nhật Redux store
+                    setEditingChatId(null); // Kết thúc chế độ chỉnh sửa
+                }
+            }
+        );
+    };
+
     const handleRemoveChat = (id: string) => {
         APIService.removeChatApi(id, (response, error) => {
             if (error) {
@@ -120,19 +174,69 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
                     <p>Gần đây:</p>
                     <div className="flex flex-col space-y-6">
                         {data.map((chat) => (
-                            <div key={chat?.id} className="flex cursor-pointer items-center justify-between p-4 bg-gray-800 hover:bg-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors duration-300 rounded-md"
-                                onClick={() => handleSelectChat(chat?.id)}>
-                                <div className="flex items-center space-x-4">
-                                    <Image src={IconChat} alt="chat icon" className="w-8 h-8" />
-                                    <p className="text-xs text-white">{chat.title}</p>
+                            <div key={chat?.id} className="relative">
+                                <div
+                                    className="flex cursor-pointer items-center justify-between p-4 bg-gray-800 hover:bg-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors duration-300 rounded-md"
+                                    onClick={() => handleSelectChat(chat?.id)}
+                                >
+                                    <div className="flex items-center space-x-4">
+                                        <Image src={IconChat} alt="chat icon" className="w-8 h-8" />
+                                        {editingChatId === chat.id ? (
+                                            <input
+                                                type="text"
+                                                value={newTitle}
+                                                onChange={(e) => setNewTitle(e.target.value)}
+                                                onBlur={() => saveRename(chat.id)} // Lưu khi mất focus
+                                                onKeyDown={(e) => {
+                                                    if (e.key === "Enter") {
+                                                        saveRename(chat.id); // Lưu khi nhấn Enter
+                                                    }
+                                                }}
+                                                autoFocus
+                                                className="w-full text-xs text-white bg-transparent border border-gray-500 rounded-md px-2 py-1 outline-none focus:border-blue-500 transition-colors duration-200"
+                                            />
+                                        ) : (
+                                            <p className="text-xs text-white">{chat.title}</p>
+                                        )}
+                                    </div>
+                                    <button
+                                        data-menu-id={chat.id}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            setMenuOpen(menuOpen === chat.id ? null : chat.id); // Toggle menu
+                                        }}
+                                    >
+                                        <BsThreeDotsVertical className="w-5 h-5 text-white" />
+                                    </button>
                                 </div>
-                                <button onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    handleRemoveChat(chat.id);
-                                }}>
-                                    <Image src={IconTrash} alt="trash icon" className="w-5 h-5" />
-                                </button>
+                                {/* Dropdown menu */}
+                                {menuOpen === chat.id && (
+                                    <div
+                                        data-dropdown-id={chat.id}
+                                        className="absolute top-0 right-0 mt-2 z-[500] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg"
+                                        style={{ transform: "translateX(100%)" }}
+                                    >
+                                        <button
+                                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                            onClick={() => {
+                                                startRename(chat.id, chat.title);
+                                                setMenuOpen(null);
+                                            }}
+                                        >
+                                            Rename
+                                        </button>
+                                        <button
+                                            className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                            onClick={() => {
+                                                handleRemoveChat(chat.id);
+                                                setMenuOpen(null); // Đóng menu sau khi chọn
+                                            }}
+                                        >
+                                            Delete
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>

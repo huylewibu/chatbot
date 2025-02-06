@@ -85,4 +85,12 @@ export const APIService = {
         APIClient.post("/api/auth/token/refresh", data, completion);
     },
 
+    // Generate image
+    generateImageApi(
+        data: { prompt: string },
+        completion: (data: { image?: string; error?: string } | null, error: Interfaces.HandelErrors | null) => void
+    ) {
+        APIClient.post("/api/generate-image/", data, completion);
+    },
+
 };

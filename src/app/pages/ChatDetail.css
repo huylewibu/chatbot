@@ -23,7 +23,22 @@ li {
     height: 70vh; 
     padding: 1rem;
     margin-top: 20px;
-  }
+}
+
+.message.user {
+    background: #333;
+    color: #f0f0f0;
+    border-radius: 20px;
+    padding: 10px 15px;
+    max-width: calc(80% - 10px);
+    width: fit-content;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.5;
+    position: relative;
+    margin-left: 10px;
+}
 
 /* Tin nhắn của user */
 .message-container.user {
@@ -98,6 +113,53 @@ li {
     height: 20px;
     animation: spin 1s linear infinite; /* Hiệu ứng xoay */
     margin-left: 10px; /* Khoảng cách với input */
+}
+
+.textarea-container {
+    position: relative;
+    display: flex;
+    flex-direction: column-reverse;
+    height: 100px;
+}
+
+.border-div {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+    z-index: 1;
+}
+
+.textarea-container textarea {
+    position: relative;
+    bottom: 0;
+    left: 0;
+    width: 90%;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 2;
+    background-color: transparent;
+    resize: none;
+}
+
+.image-preview {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 3;
+}
+
+.image-preview button {
+    display: none; /* Ban đầu ẩn */
+}
+
+.image-preview:hover button {
+    display: flex; /* Hiển thị khi hover vào ảnh preview */
 }
 
 /* Keyframe xoay */
