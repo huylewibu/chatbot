@@ -128,7 +128,7 @@ declare namespace Interfaces {
     }
 
     interface ChatRequest {
-        chat_id: any;
+        chat_id: string;
         message: string;
         chat_history: ChatHistoryRequest[];
         image_base64?: string[]
@@ -157,7 +157,7 @@ declare namespace Interfaces {
     // API Rename Chat
     interface RenameChatRequest {
         message?: string;
-        chat_id: any;
+        chat_id: string;
         new_title?: string;
     }
 

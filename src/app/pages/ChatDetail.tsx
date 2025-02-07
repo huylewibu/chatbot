@@ -33,7 +33,7 @@ export const ChatDetail = () => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-    const handleTextareaChange = (e: any) => {
+    const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const textarea = e.target;
         setInputChat(textarea.value);
 
@@ -51,7 +51,7 @@ export const ChatDetail = () => {
 
     const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
-    const currentChatMessage = useSelector((state: RootState) => selectChatById(state, id));
+    const currentChatMessage = useSelector((state: RootState) => selectChatById(state, id as string));
     const messageDetail = currentChatMessage?.messages || [];
 
     const handleEditClick = (messageId: string, currentText: string) => {
@@ -155,7 +155,7 @@ export const ChatDetail = () => {
             if (messageDetail.length === 0) {
                 setTimeout(() => {
                     APIService.renameChatApi(
-                        { chat_id: chatId, message: messageToSend, new_title: undefined },
+                        { chat_id: chatId as string, message: messageToSend, new_title: undefined },
                         (renameResponse, error) => {
                             if (error) {
                                 console.error("Error renaming chat:", error);
@@ -185,7 +185,7 @@ export const ChatDetail = () => {
                 onImageSelected([]);
                 APIService.chatApi(
                     {
-                        chat_id: chatId,
+                        chat_id: chatId as string,
                         message: messageToSend,
                         chat_history: formattedChatHistory,
                         image_base64: selectedImageBase64

@@ -1,4 +1,5 @@
-/* eslint-disable */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import APIClient from '../api/apiEndpoints'
 
 export const APIService = {

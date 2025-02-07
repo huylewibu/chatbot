@@ -14,7 +14,7 @@ const store = configureStore({
 const selectChats = (state: RootState) => state.chat.data;
 
 export const selectChatById = createSelector(
-    [selectChats, (_: RootState, id: any) => id],
+    [selectChats, (_: RootState, id: string) => id],
     (chats, id) => chats.find(chat => chat.id === id) || null
 );
 
