@@ -131,7 +131,7 @@ declare namespace Interfaces {
         chat_id: any;
         message: string;
         chat_history: ChatHistoryRequest[];
-        image_base64?: string | null
+        image_base64?: string[]
     }
 
     interface ChatHistoryRequest {

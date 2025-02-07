@@ -162,6 +162,22 @@ li {
     display: flex; /* Hiển thị khi hover vào ảnh preview */
 }
 
+.unicode.svelte-zn7un9 {
+    unicode-bidi: plaintext;
+}
+
+.dynamic-textarea {
+    position: absolute; /* Gắn vị trí tuyệt đối */
+    bottom: 0; /* Gắn vào dưới cùng của container */
+    transition: height 0.2s ease; /* Hiệu ứng mượt mà khi thay đổi chiều cao */
+  }
+  
+.messageInput.svelte-zn7un9 {
+    padding: 14px 10px 12px 0;
+    border-radius: 24px;
+}
+
+
 /* Keyframe xoay */
 @keyframes spin {
     0% {

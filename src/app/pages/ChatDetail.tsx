@@ -16,25 +16,32 @@ import { APIService } from "../services/APIServices";
 import { Params } from "next/dist/server/request/params";
 import { GoPencil } from "react-icons/go";
 import './ChatDetail.css';
-import ImageUploader from "../components/ImageUploader";
+import { FiUpload } from "react-icons/fi";
+import { handleImageUpload } from "../components/ImageUploader";
 
 export const ChatDetail = () => {
     const [inputChat, setInputChat] = useState<string>("");
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
-    const [selectedImageBase64, setSelectedImageBase64] = useState<string | null>(null);
     const [editMode, setEditMode] = useState<Interfaces.EditMode>({ isEditing: false, messageId: "", text: "" });
     const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
-    const [textareaHeight, setTextareaHeight] = useState('auto'); // State để theo dõi chiều cao của textarea
+    const [textareaHeight, setTextareaHeight] = useState('auto');
+    const [selectedImageBase64, setSelectedImageBase64] = useState<string[]>([]);
+    const [imagePreview, setImagePreview] = useState<string[]>([]);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const handleTextareaChange = (e: any) => {
-        setInputChat(e.target.value);
-        e.target.style.height = "auto"; // Reset height to auto
-        e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`; // Set new height
-        setTextareaHeight(e.target.style.height); // Cập nhật state với chiều cao mới
-        scrollToBottom();
+        const textarea = e.target;
+        setInputChat(textarea.value);
+
+        textarea.style.height = 'auto';
+
+        const newHeight = Math.min(textarea.scrollHeight, 200); // Giới hạn tối đa 200px
+        textarea.style.height = `${newHeight}px`;
+
+        setTextareaHeight(`${newHeight}px`);
     };
 
     const { id } = useParams<Params>();
@@ -59,29 +66,42 @@ export const ChatDetail = () => {
     useEffect(() => {
         scrollToBottom();
     }, [messageDetail]);
-
+    
     useEffect(() => {
-        console.log("selectedImageBase64: ", selectedImageBase64);
-    }, [selectedImageBase64]);
+        console.log(imagePreview);
+        console.log(selectedImageBase64)
+    }, [imagePreview, selectedImageBase64]);
 
     const handlePaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
         const items = event.clipboardData.items;
         for (let i = 0; i < items.length; i++) {
             const item = items[i];
-            if (item.type.indexOf("image") !== -1) {
-                const blob = item.getAsFile();
-                if (blob) {
-                    const reader = new FileReader();
-                    reader.onload = () => {
-                        const base64String = reader.result?.toString().split(',')[1];
-                        setSelectedImageBase64(base64String || null);
-                    };
-                    reader.onerror = (error) => {
-                        console.error("Error reading pasted image:", error);
-                    };
-                    reader.readAsDataURL(blob);
-                }
-            }
+            // if (item.type.indexOf("image") !== -1) {
+            //     const blob = item.getAsFile();
+            //     if (blob) {
+            //         const reader = new FileReader();
+            //         reader.onload = () => {
+            //             const base64String = reader.result?.toString().split(',')[1];
+            //             setSelectedImageBase64(base64String || null);
+            //         };
+            //         reader.onerror = (error) => {
+            //             console.error("Error reading pasted image:", error);
+            //         };
+            //         reader.readAsDataURL(blob);
+            //     }
+            // }
+        }
+    };
+
+    const onImageSelected = (base64Images: string[]) => {
+        setSelectedImageBase64(base64Images)
+    }
+
+    const handleRemoveImage = (index: number) => {
+        setImagePreview((prev) => prev.filter((_, i) => i !== index)); 
+        setSelectedImageBase64((prev) => prev.filter((_, i) => i !== index)); 
+        if (fileInputRef.current) {
+            fileInputRef.current.value = ""; 
         }
     };
 
@@ -97,7 +117,9 @@ export const ChatDetail = () => {
 
         setIsLoading(true);
         // Nếu đang gửi từ textarea thì xóa nội dung (để tránh gửi lại khi đã lưu trong query string)
-        if (!initialQuestion) setInputChat("");
+        if (!initialQuestion) {
+            setInputChat("")
+        }
 
         let chatId = id;
 
@@ -158,6 +180,8 @@ export const ChatDetail = () => {
 
             // Gọi API gửi tin nhắn (dù là câu hỏi ban đầu hay tin nhắn từ textarea)
             await new Promise<void>((resolve, reject) => {
+                setImagePreview([]);
+                onImageSelected([]);
                 APIService.chatApi(
                     {
                         chat_id: chatId,
@@ -377,43 +401,111 @@ export const ChatDetail = () => {
                             </div>
                         </div>
                     )}
-                    <div className="flex items-center space-x-4 w-full textarea-container">
-                        <div className="flex flex-col-reverse w-full relative">
-                            {isLoading && (
-                                <div className="absolute top-[30px] left-[10px] right-[10px] transform -translate-y-1/2 
-                                text-white p-2 rounded-full transition-all 
-                                w-[40px] h-[40px] flex items-center justify-center z-[500]">
-                                    <div className="animate-spin h-5 w-5 border-4 border-white border-t-transparent rounded-full"></div>
+                    <div className="pb-8" style={{ marginTop: "128px" }}>
+                        <div className="font-primary relative z-50 w-full">
+                            <div className="inset-x-0 mx-auto -mb-0.5 flex justify-center bg-transparent">
+                                <div className="flex w-full max-w-6xl flex-col px-2.5" id="message-input-container">
+                                    <div className="relative"></div>
+                                    <div className="relative w-full"></div>
                                 </div>
-                            )}
-                            <div className="w-full h-[70px] relative" style={{ height: textareaHeight }}>
-                                <ImageUploader
-                                    onImageSelected={(base64) => setSelectedImageBase64(base64)}
-                                />
-                                <textarea
-                                    ref={inputRef}
-                                    rows={1}
-                                    value={inputChat}
-                                    placeholder={isLoading ? "" : "Nhập câu hỏi tại đây"}
-                                    className="p-4 rounded-lg bg-background text-black 
-                                            dark:text-white dark:bg-gray-800 w-[90%] max-h-[300px]
-                                            dark:border-gray-600 placeholder-gray-500 border
-                                            dark:placeholder-gray-400 resize-none overflow-y-auto 
-                                            break-words border-gray-200 dark:border-gray-600"
-                                    style={{
-                                        minHeight: "57.6px",
-                                        height: "100%",
-                                    }}
-                                    onChange={handleTextareaChange}
-                                    onKeyDown={(e) => {
-                                        if (e.key === "Enter" && !e.shiftKey) {
-                                            e.preventDefault();
-                                            handleChatDetail();
-                                        }
-                                    }}
-                                    onPaste={handlePaste}
-                                    disabled={isLoading}
-                                />
+                            </div>
+                            <div className="px-4">
+                                <div className="max-w-6xl dynamic-textarea mx-auto inset-x-0 messageInput bg-[#F7F8FC] dark:bg-[#2A2A2A] dark:text-gray-100 svelte-zn7un9">
+                                    <div>
+                                        <input type="file" id="filesUpload" multiple style={{ display: 'none' }} />
+                                        <div className="flex w-full gap-1.5" data-gtm-form-interact-id="0">
+                                            <div className="flex-1 flex flex-col relative w-full rounded-3xl bg-[#F7F8FC] dark:bg-[#2A2A2A] dark:text-gray-100" dir="LTR" data-spm-anchor-id="5aebb161.686ec91.0.i9.26c8c921liSDnV">
+                                                <div className="mx-1 mb-1 flex flex-wrap gap-2">
+                                                    {imagePreview && imagePreview.map((preview, index) => (
+                                                        <div key={index} className="group relative">
+                                                            <div className="relative flex">
+                                                                <img
+                                                                    src={preview}
+                                                                    alt="image.png"
+                                                                    className="rounded-xl object-cover ml-3"
+                                                                    style={{ width: "3.8rem", height: "3.8rem" }}
+                                                                />
+                                                            </div>
+                                                            <div className="absolute -right-1 -top-1">
+                                                                <button
+                                                                    className="invisible rounded-full border border-white bg-gray-400 text-white transition group-hover:visible"
+                                                                    type="button"
+                                                                    onClick={() => handleRemoveImage(index)}
+                                                                >
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                                                                        <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"></path>
+                                                                    </svg>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <div className="flex">
+                                                    <textarea
+                                                        ref={inputRef}
+                                                        value={inputChat}
+                                                        placeholder={isLoading ? "" : "Nhập câu hỏi tại đây"}
+
+                                                        className="scrollbar-hidden bg-[#F7F8FC] dark:bg-[#2A2A2A] dark:text-gray-100 outline-none w-full rounded-xl pl-4 resize-none h-[24px] unicode"
+                                                        rows={1}
+                                                        onChange={handleTextareaChange}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === "Enter" && !e.shiftKey) {
+                                                                e.preventDefault();
+                                                                handleChatDetail();
+                                                            }
+                                                        }}
+                                                        onPaste={handlePaste}
+                                                        disabled={isLoading}
+                                                        style={{ height: textareaHeight }}
+                                                    ></textarea>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-end w-10">
+                                                <div className="flex items-center">
+                                                    <div aria-label="Send message" className="flex">
+                                                        <button
+                                                            id="send-message-button"
+                                                            onClick={handleChatDetail}
+                                                            className="w-8 h-8 flex items-center justify-center self-center rounded-full transition bg-purple-500 text-white hover:bg-purple-600 dark:bg-purple-500 dark:text-white dark:hover:bg-purple-600"
+                                                        >
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                                                                <path
+                                                                    d="M12.9 18.45c0 .414-.336.75-.75.75s-.75-.336-.75-.75V7.36l-4.72 4.72c-.14.14-.33.22-.53.22s-.39-.08-.53-.22c-.14-.14-.22-.33-.22-.53s.08-.39.22-.53l6-6c.095-.095.208-.159.328-.193.107-.03.219-.035.328-.017.025.004.05.01.075.017.121.033.235.097.33.192l6 6c.14.14.22.33.22.53s-.08.39-.22.53c-.14.14-.33.22-.53.22s-.39-.08-.53-.22l-4.72-4.72V18.45z"
+                                                                    fill="currentColor"
+                                                                ></path>
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="mt-3 flex items-center justify-between pl-4">
+                                        <div className="flex items-center left-content">
+                                            <>
+                                                <label htmlFor="image-upload" className="cursor-pointer z-[500]"
+                                                    style={{ top: "-2rem", right: "7.75rem" }}
+                                                >
+                                                    {/* Biểu tượng upload */}
+                                                    <div className="flex">
+                                                        <FiUpload className="w-6 h-6" />
+                                                        <p>Upload image</p>
+                                                    </div>
+                                                </label>
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    ref={fileInputRef}
+                                                    multiple
+                                                    id="image-upload"
+                                                    style={{ display: "none" }}
+                                                    onChange={(e) => handleImageUpload(e, onImageSelected, setImagePreview)}
+                                                />
+                                            </>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
