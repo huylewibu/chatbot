@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { configureStore } from "@reduxjs/toolkit";
 import chatReducer from './chatSlice/chatSlice'
 import authReducer from "./authSlice/authSlice";

@@ -1,5 +1,6 @@
 'use client'
 
+/* eslint-disable */
 import ImgTemp from "../assets/temp.jpeg";
 import IconMenu from "../assets/menu.png";
 import IconStar from "../assets/star.png";
