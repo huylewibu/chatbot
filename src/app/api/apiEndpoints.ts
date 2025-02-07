@@ -4,7 +4,7 @@ import axiosInstance from "../services/axiosInstance";
 const APIClient = {
   get: async (
     url: string,
-    completion: (data: any, error: Interfaces.HandelErrors | null) => void
+    completion: (data: string | null, error: Interfaces.HandelErrors | null) => void
   ) => {
     try {
       const response = await axiosInstance.get(url); // Sử dụng axiosInstance
@@ -16,8 +16,8 @@ const APIClient = {
 
   post: async (
     url: string,
-    data: any,
-    completion: (data: any, error: Interfaces.HandelErrors | null) => void
+    data: string[],
+    completion: (data: string | null, error: Interfaces.HandelErrors | null) => void
   ) => {
     try {
       const response = await axiosInstance.post(url, data);
@@ -28,7 +28,7 @@ const APIClient = {
   },
   delete: async (
     url: string,
-    completion: (data: any, error: Interfaces.HandelErrors | null) => void
+    completion: (data: string | null, error: Interfaces.HandelErrors | null) => void
   ) => {
     try {
       const response = await axiosInstance.delete(url);
