@@ -6,7 +6,7 @@ import '../pages/ChatDetail.css';
 export const handleImageUpload = (
     event: React.ChangeEvent<HTMLInputElement>,
     onImageSelected: (base64Images: string[]) => void,
-    setImagePreview: any
+    setImagePreview: (previewUrls: string[]) => void
 ) => {
     const files = event.target.files
     if (files && files.length > 0) {
