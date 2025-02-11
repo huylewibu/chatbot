@@ -112,8 +112,15 @@ li {
     width: 20px; /* Kích thước */
     height: 20px;
     animation: spin 1s linear infinite; /* Hiệu ứng xoay */
-    margin-left: 10px; /* Khoảng cách với input */
 }
+
+.spinner-overlay {
+    position: absolute;
+    top: 50%;
+    left: 3%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+  }
 
 .textarea-container {
     position: relative;

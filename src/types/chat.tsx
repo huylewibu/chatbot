@@ -42,15 +42,16 @@ declare namespace Interfaces {
             title: string
             updated_at: string
             messages: string[]
+            username: string
         }[]
     }
 
     interface MessagesResponse {
         chat: {
-            id: string,
-            title: string,
-            created_at: string,
-            updated_at: string,
+            id: string
+            title: string
+            created_at: string
+            updated_at: string
         }
         message_data: MessageData[]
     }
@@ -60,7 +61,9 @@ declare namespace Interfaces {
         message: string,
         is_bot: boolean,
         sequence: number,
-        created_at: string
+        created_at: string,
+        is_has_image: boolean,
+        image_url: string,
     }
 
     interface Chat {
@@ -75,6 +78,8 @@ declare namespace Interfaces {
         isTyping?: boolean;
         pendingMessage?: string;
         sequence?: number;
+        is_has_image?: boolean;
+        image_url?: string;
     }
 
     interface SidebarProps {
@@ -131,7 +136,9 @@ declare namespace Interfaces {
         chat_id: string;
         message: string;
         chat_history: ChatHistoryRequest[];
-        image_base64?: string[]
+        image_base64?: string[];
+        is_has_image?: boolean;
+        image_url?: string;
     }
 
     interface ChatHistoryRequest {
@@ -145,6 +152,8 @@ declare namespace Interfaces {
             id: string;
             message: string;
             is_bot: boolean;
+            is_has_image: boolean;
+            image_url: string;
         };
         bot_response: {
             message: string;

@@ -19,6 +19,7 @@ import { GoPencil } from "react-icons/go";
 import './ChatDetail.css';
 import { FiUpload } from "react-icons/fi";
 import { handleImageUpload } from "../components/ImageUploader";
+import MarkdownRenderer from "../components/MarkdownRenderer";
 
 export const ChatDetail = () => {
     const [inputChat, setInputChat] = useState<string>("");
@@ -54,6 +55,10 @@ export const ChatDetail = () => {
     const currentChatMessage = useSelector((state: RootState) => selectChatById(state, id as string));
     const messageDetail = currentChatMessage?.messages || [];
 
+    useEffect(() => {
+        scrollToBottom();
+    }, [messageDetail]);
+
     const handleEditClick = (messageId: string, currentText: string) => {
         setEditMode({ isEditing: true, messageId, text: currentText });
     };
@@ -64,45 +69,52 @@ export const ChatDetail = () => {
         }
     };
 
-    useEffect(() => {
-        scrollToBottom();
-    }, [messageDetail]);
-    
-    useEffect(() => {
-        console.log(imagePreview);
-        console.log(selectedImageBase64)
-    }, [imagePreview, selectedImageBase64]);
-
-    const handlePaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const handlePasteImage = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
         const items = event.clipboardData.items;
+        const base64Images: string[] = [];
+        const previewUrls: string[] = [];
+
         for (let i = 0; i < items.length; i++) {
             const item = items[i];
-            // if (item.type.indexOf("image") !== -1) {
-            //     const blob = item.getAsFile();
-            //     if (blob) {
-            //         const reader = new FileReader();
-            //         reader.onload = () => {
-            //             const base64String = reader.result?.toString().split(',')[1];
-            //             setSelectedImageBase64(base64String || null);
-            //         };
-            //         reader.onerror = (error) => {
-            //             console.error("Error reading pasted image:", error);
-            //         };
-            //         reader.readAsDataURL(blob);
-            //     }
-            // }
+
+            if (item.type.indexOf("image") !== -1) {
+                const blob = item.getAsFile();
+                if (blob) {
+                    const reader = new FileReader();
+
+                    reader.onload = () => {
+                        const base64String = reader.result?.toString();
+                        if (base64String) {
+                            base64Images.push(base64String);
+
+                            const previewUrl = URL.createObjectURL(blob);
+                            previewUrls.push(previewUrl);
+
+                            // Cập nhật state khi tất cả ảnh được xử lý
+                            setImagePreview((prev: string[]) => [...prev, ...previewUrls]);
+                            setSelectedImageBase64((prev: string[]) => [...prev, ...base64Images]);
+                        }
+                    };
+                    reader.onerror = (error) => {
+                        console.error("Error reading pasted image:", error);
+                    };
+                    reader.readAsDataURL(blob);
+                }
+            }
         }
     };
 
     const onImageSelected = (base64Images: string[]) => {
-        setSelectedImageBase64(base64Images)
+        setSelectedImageBase64((prev: string[]) => [...prev, ...base64Images]);
+
     }
 
     const handleRemoveImage = (index: number) => {
-        setImagePreview((prev) => prev.filter((_, i) => i !== index)); 
-        setSelectedImageBase64((prev) => prev.filter((_, i) => i !== index)); 
+        setImagePreview((prev: string[]) => prev.filter((_, i) => i !== index));
+        setSelectedImageBase64((prev: string[]) => prev.filter((_, i) => i !== index));
+
         if (fileInputRef.current) {
-            fileInputRef.current.value = ""; 
+            fileInputRef.current.value = "";
         }
     };
 
@@ -191,6 +203,7 @@ export const ChatDetail = () => {
                         image_base64: selectedImageBase64
                     },
                     async (response, error) => {
+                        console.log("response", response);
                         if (error) {
                             console.error("Error sending message:", error);
                             return reject(error);
@@ -199,14 +212,15 @@ export const ChatDetail = () => {
                         // Nếu botResponse là object thì chuyển sang chuỗi
                         const botResponseText =
                             typeof botResponse === "string" ? botResponse : JSON.stringify(botResponse);
-                        const botResponseHTML = DOMPurify.sanitize(await marked.parse(botResponseText));
                         dispatch(
                             addMessage({
                                 idChat: chatId,
                                 userMess: messageToSend,
-                                botMess: botResponseHTML,
+                                botMess: botResponseText,
                                 botMessageId: response?.bot_response.id,
                                 userMessageId: response?.user_message.id,
+                                is_has_image: response?.user_message.is_has_image,
+                                image_url: response?.user_message.image_url,
                             })
                         );
                         setIsLoading(false);
@@ -285,90 +299,102 @@ export const ChatDetail = () => {
                     {id ? (
                         <div className="chat-container flex flex-col space-y-4 p-4 h-[70vh] overflow-x-hidden overflow-y-auto">
                             {/* .slice().sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0) */}
-                            {messageDetail.length > 0 && messageDetail.map((item) => (
-                                <div
-                                    className={`message-container ${item.isBot ? "bot" : "user"} mb-3`}
-                                    key={item.id}
-                                    onMouseEnter={() => !item.isBot && setHoveredMessageId(item.id)}
-                                    onMouseLeave={() => setHoveredMessageId(null)}
-                                >
-                                    {!item.isBot && hoveredMessageId === item.id && !editMode.isEditing && (
-                                        <button
-                                            onClick={() =>
-                                                handleEditClick(item.id, item.text)
-                                            }
-                                            className="text-blue-500 hover:bg-gray-700 h-[20px]"
-                                        >
-                                            <GoPencil />
-                                        </button>
-                                    )}
-                                    <div className={`message ${item.isBot ? "bot" : "user"}`}
-                                        style={!item.isBot && editMode.isEditing && editMode.messageId === item.id ? { width: "100%" } : {}}
-                                    >
-                                        {item.isBot ? (
-                                            <>
-                                                <Image src={IconStar} alt="star" className="w-8 h-8" />
-                                                <p
-                                                    dangerouslySetInnerHTML={{
-                                                        __html: DOMPurify.sanitize(marked.parse(item.text || "") as string),
-                                                    }}
-                                                ></p>
-                                            </>
-                                        ) : (
-                                            <>
-                                                {editMode.isEditing && editMode.messageId === item.id ? (
-                                                    <div className="items-center space-x-3 w-full">
-                                                        <textarea
-                                                            ref={inputRef}
-                                                            value={editMode.text}
-                                                            style={{
-                                                                minHeight: "30px",
-                                                                height: `${Math.min(Math.max(inputRef.current?.scrollHeight || 50, 50), 208)}px`,
-                                                                maxHeight: "208px",
-                                                            }}
-                                                            className="p-2 w-full bg-[#333333] resize-y overflow-y-auto"
-                                                            onChange={(e) => {
-                                                                setEditMode((prev) => ({
-                                                                    ...prev,
-                                                                    text: e.target.value,
-                                                                }))
-                                                            }}
-                                                        />
-                                                        <div className="flex justify-end space-x-2 mt-2">
-                                                            <button
-                                                                className="p-2 bg-green-500 text-white rounded"
-                                                                onClick={() => handleSaveEdit(id)}
-                                                            >
-                                                                Save
-                                                            </button>
-                                                            <button
-                                                                className="p-2 bg-gray-500 text-white rounded"
-                                                                onClick={() =>
-                                                                    setEditMode({
-                                                                        isEditing: false,
-                                                                        messageId: "",
-                                                                        text: "",
-                                                                    })
-                                                                }
-                                                            >
-                                                                Cancel
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <div className="relative flex w-full min-w-0 flex-col">
-                                                        <div className="whitespace-pre-wrap text-sm"
-                                                            dangerouslySetInnerHTML={{
-                                                                __html: DOMPurify.sanitize(marked.parse(item.text || "") as string),
-                                                            }}
-                                                        ></div>
-
-                                                    </div>
-                                                )}
-                                            </>
-                                        )}
+                            {messageDetail.length > 0 && messageDetail.map((item, index) => (
+                                <div key={index} className="flex flex-col justify-between ">
+                                    <div className="self-end">
+                                        <div className="w-max-full w-fit">
+                                            {item.is_has_image && item.image_url && (
+                                                <div className="mt-2 mb-2">
+                                                    <img
+                                                        src={item.image_url}
+                                                        alt="Uploaded Image"
+                                                        className="rounded-xl object-cover"
+                                                        style={{ width: "700px", height: "24rem" }}
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
+                                    <div
+                                        className={`message-container ${item.isBot ? "bot" : "user"} mb-3`}
+                                        key={item.id}
+                                        onMouseEnter={() => !item.isBot && setHoveredMessageId(item.id)}
+                                        onMouseLeave={() => setHoveredMessageId(null)}
+                                    >
+                                        {!item.isBot && hoveredMessageId === item.id && !editMode.isEditing && (
+                                            <button
+                                                onClick={() =>
+                                                    handleEditClick(item.id, item.text)
+                                                }
+                                                className="text-blue-500 hover:bg-gray-700 h-[20px]"
+                                            >
+                                                <GoPencil />
+                                            </button>
+                                        )}
+                                        <div className={`message ${item.isBot ? "bot" : "user"}`}
+                                            style={!item.isBot && editMode.isEditing && editMode.messageId === item.id ? { width: "100%" } : {}}
+                                        >
 
+                                            {item.isBot ? (
+                                                <>
+                                                    <Image src={IconStar} alt="star" className="w-8 h-8" />
+                                                    <div className="markdown-content">
+                                                        <MarkdownRenderer content={item.text || ""} />
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    {editMode.isEditing && editMode.messageId === item.id ? (
+                                                        <div className="items-center space-x-3 w-full">
+                                                            <textarea
+                                                                ref={inputRef}
+                                                                value={editMode.text}
+                                                                style={{
+                                                                    minHeight: "30px",
+                                                                    height: `${Math.min(Math.max(inputRef.current?.scrollHeight || 50, 50), 208)}px`,
+                                                                    maxHeight: "208px",
+                                                                }}
+                                                                className="p-2 w-full bg-[#333333] resize-y overflow-y-auto"
+                                                                onChange={(e) => {
+                                                                    setEditMode((prev) => ({
+                                                                        ...prev,
+                                                                        text: e.target.value,
+                                                                    }))
+                                                                }}
+                                                            />
+                                                            <div className="flex justify-end space-x-2 mt-2">
+                                                                <button
+                                                                    className="p-2 bg-green-500 text-white rounded"
+                                                                    onClick={() => handleSaveEdit(id)}
+                                                                >
+                                                                    Save
+                                                                </button>
+                                                                <button
+                                                                    className="p-2 bg-gray-500 text-white rounded"
+                                                                    onClick={() =>
+                                                                        setEditMode({
+                                                                            isEditing: false,
+                                                                            messageId: "",
+                                                                            text: "",
+                                                                        })
+                                                                    }
+                                                                >
+                                                                    Cancel
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="relative flex w-full min-w-0 flex-col">
+                                                            <div className="whitespace-pre-wrap text-sm">
+                                                                <MarkdownRenderer content={item.text || ""} />
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
+
+                                    </div>
                                 </div>
                             ))}
                             <div ref={messagesEndRef} />
@@ -422,7 +448,7 @@ export const ChatDetail = () => {
                                                             <div className="relative flex">
                                                                 <img
                                                                     src={preview}
-                                                                    alt="image.png"
+                                                                    alt={`Preview ${index}`}
                                                                     className="rounded-xl object-cover ml-3"
                                                                     style={{ width: "3.8rem", height: "3.8rem" }}
                                                                 />
@@ -442,6 +468,11 @@ export const ChatDetail = () => {
                                                     ))}
                                                 </div>
                                                 <div className="flex">
+                                                    <div
+                                                        className={`spinner-overlay ${isLoading ? '' : 'hidden'}`}
+                                                    >
+                                                        <div className="loading-spinner"></div>
+                                                    </div>
                                                     <textarea
                                                         ref={inputRef}
                                                         value={inputChat}
@@ -456,7 +487,7 @@ export const ChatDetail = () => {
                                                                 handleChatDetail();
                                                             }
                                                         }}
-                                                        onPaste={handlePaste}
+                                                        onPaste={handlePasteImage}
                                                         disabled={isLoading}
                                                         style={{ height: textareaHeight }}
                                                     ></textarea>

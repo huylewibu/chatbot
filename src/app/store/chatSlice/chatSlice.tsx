@@ -21,14 +21,14 @@ const chatSlice = createSlice({
             state.data.push(newChat)
         },
         addMessage: (state, action) => {
-            const {idChat, userMess, botMess, botMessageId, userMessageId} = action.payload
+            const {idChat, userMess, botMess, botMessageId, userMessageId, is_has_image, image_url} = action.payload
             const chat = state.data.find((chat) => chat.id === idChat)
             if (chat) {
                 const messageFormat = marked.parse(botMess) as string
                 const safeChat = DOMPurify.sanitize(messageFormat)
                 const newMessage = [
                     ...chat.messages,
-                    {id: userMessageId, text: userMess, isBot: false},
+                    {id: userMessageId, text: userMess, isBot: false, is_has_image: is_has_image, image_url: image_url},
                     { 
                         id: botMessageId, 
                         text: safeChat, // Bắt đầu với nội dung rỗng
@@ -86,10 +86,13 @@ const chatSlice = createSlice({
                     messages: updatedMessages,
                 };
             }
+        },
+        resetChat(state) {
+            state.data = []; 
         }
     }
 })
 
-export const { addChat, removeChat, addMessage, setNameChat, updateMessage, loadChat, setMessages } = chatSlice.actions;
+export const { addChat, removeChat, addMessage, setNameChat, updateMessage, loadChat, setMessages, resetChat } = chatSlice.actions;
 
 export default chatSlice.reducer

@@ -67,4 +67,6 @@ const normalizeError = (error: unknown): Interfaces.HandelErrors => {
   };
 };
 
+export const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`;
+export const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 export default APIClient

@@ -20,6 +20,7 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
     const [newTitle, setNewTitle] = useState<string>("");
     const dispatch = useDispatch();
     const navigate = useRouter();
+    const { user } = useSelector((state: RootState) => state.auth);
     const { data } = useSelector((state: RootState) => state.chat);
     const { id } = useParams<Params>();
 
@@ -31,7 +32,11 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
                     return;
                 }
                 if (dataResponse) {
-                    const formattedChats = dataResponse.chats.map((chat) => ({
+                    const userChats = dataResponse.chats.filter(
+                        (chat) => chat.username === user?.username
+                    );
+
+                    const formattedChats = userChats.map((chat) => ({
                         ...chat,
                         messages: chat.messages || [],
                     }));
@@ -79,6 +84,8 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
                     isBot: message.is_bot,
                     createdAt: message.created_at,
                     sequence: message.sequence,
+                    is_has_image: message.is_has_image,
+                    image_url: message.image_url,
                 }));
                 dispatch(setMessages({ chatId, messages: formattedMessages }));
                 navigate.push(`/chat/${chatId}`);

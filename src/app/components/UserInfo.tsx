@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { logout } from "../store/authSlice/authSlice";
 import React from "react";
 import ThemeSwitcher from "./ThemeSwitcher";
+import { resetChat } from "../store/chatSlice/chatSlice";
 
 const UserInfo: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useSelector((state: RootState) => state.auth);
@@ -14,6 +15,7 @@ const UserInfo: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   const handleLogout = () => {
     dispatch(logout());
+    dispatch(resetChat());
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
     router.push("/login");
