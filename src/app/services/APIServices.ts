@@ -85,6 +85,14 @@ export const APIService = {
         APIClient.post("/api/auth/token/refresh", data, completion);
     },
 
+    // Upload files
+    uploadFileApi(
+        formData: FormData,
+        completion: (data: Interfaces.ChatResponse | null, error: Interfaces.HandelErrors | null) => void
+    ) {
+        APIClient.postForm("/api/upload-files/", formData, completion); // Sử dụng postForm thay vì post
+    },
+
     // Generate image
     generateImageApi(
         data: { prompt: string },

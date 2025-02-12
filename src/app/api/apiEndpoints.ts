@@ -26,6 +26,22 @@ const APIClient = {
       completion(null, normalizeError(error));
     }
   },
+  postForm: async <T> ( // <-- Thêm postForm cho multipart/form-data
+    url: string,
+    formData: FormData,
+    completion: (data: T | null, error: Interfaces.HandelErrors | null) => void
+  ) => {
+    try {
+      const response = await axiosInstance.post(url, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data", 
+        },
+      });
+      completion(response.data, null);
+    } catch (error: unknown) {
+      completion(null, normalizeError(error));
+    }
+  },
   delete: async <T> (
     url: string,
     completion: (data: T | null, error: Interfaces.HandelErrors | null) => void

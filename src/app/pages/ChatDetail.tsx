@@ -8,8 +8,6 @@ import Image from "next/image";
 import Sidebar from "../components/Sidebar";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { marked } from "marked";
-import DOMPurify from "dompurify";
 import { useDispatch, useSelector } from "react-redux";
 import { addChat, addMessage, setNameChat, updateMessage } from "../store/chatSlice/chatSlice";
 import { RootState, selectChatById } from "../store/app";
@@ -19,7 +17,9 @@ import { GoPencil } from "react-icons/go";
 import './ChatDetail.css';
 import { FiUpload } from "react-icons/fi";
 import { handleImageUpload } from "../components/ImageUploader";
+import { FaImages } from "react-icons/fa";
 import MarkdownRenderer from "../components/MarkdownRenderer";
+import { formatFileSize } from "../components/formatFileSize";
 
 export const ChatDetail = () => {
     const [inputChat, setInputChat] = useState<string>("");
@@ -33,6 +33,13 @@ export const ChatDetail = () => {
     const [imagePreview, setImagePreview] = useState<string[]>([]);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [filePreview, setFilePreview] = useState<string | null>(null);
+    const fileUploadRef = useRef<HTMLInputElement | null>(null);
+
+    useEffect(() => {
+        console.log("selectedFile", selectedFile)
+    }, [selectedFile])
 
     const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const textarea = e.target;
@@ -191,43 +198,78 @@ export const ChatDetail = () => {
                 inputRef.current.style.height = "";
             }
 
-            // Gọi API gửi tin nhắn (dù là câu hỏi ban đầu hay tin nhắn từ textarea)
-            await new Promise<void>((resolve, reject) => {
-                setImagePreview([]);
-                onImageSelected([]);
-                APIService.chatApi(
-                    {
-                        chat_id: chatId as string,
-                        message: messageToSend,
-                        chat_history: formattedChatHistory,
-                        image_base64: selectedImageBase64
-                    },
-                    async (response, error) => {
-                        console.log("response", response);
-                        if (error) {
-                            console.error("Error sending message:", error);
-                            return reject(error);
+
+            if (selectedFile) {
+                const formData = new FormData();
+                formData.append("file", selectedFile);
+                formData.append("query", inputChat.trim());
+                formData.append("chat_id", chatId as string);
+
+                await new Promise<void>((resolve, reject) => {
+                    APIService.uploadFileApi(formData, (fileResponse, fileError) => {
+                        console.log(fileResponse);
+                        if (fileError) {
+                            console.error("Lỗi khi upload file:", fileError.message);
+                            setIsLoading(false);
+                            return reject(fileError);
                         }
-                        const botResponse = response?.bot_response.message || "Không nhận được phản hồi từ bot.";
-                        // Nếu botResponse là object thì chuyển sang chuỗi
-                        const botResponseText =
-                            typeof botResponse === "string" ? botResponse : JSON.stringify(botResponse);
-                        dispatch(
-                            addMessage({
-                                idChat: chatId,
-                                userMess: messageToSend,
-                                botMess: botResponseText,
-                                botMessageId: response?.bot_response.id,
-                                userMessageId: response?.user_message.id,
-                                is_has_image: response?.user_message.is_has_image,
-                                image_url: response?.user_message.image_url,
-                            })
-                        );
-                        setIsLoading(false);
-                        resolve();
-                    }
-                );
-            });
+                        if (fileResponse) {
+                            dispatch(
+                                addMessage({
+                                    idChat: chatId,
+                                    userMess: messageToSend,
+                                    botMess: fileResponse?.bot_response?.message || "Không có phản hồi từ bot.",
+                                    botMessageId: fileResponse?.bot_response?.id,
+                                    userMessageId: fileResponse?.user_message?.id,
+                                    is_has_image: fileResponse?.user_message?.is_has_image,
+                                    image_url: fileResponse?.user_message?.image_url,
+                                })
+                            );
+                            setIsLoading(false);
+                            resolve();
+                        }
+                    });
+                });
+            } else {
+                // Gọi API gửi tin nhắn (dù là câu hỏi ban đầu hay tin nhắn từ textarea)
+                await new Promise<void>((resolve, reject) => {
+                    setImagePreview([]);
+                    onImageSelected([]);
+
+                    APIService.chatApi(
+                        {
+                            chat_id: chatId as string,
+                            message: messageToSend,
+                            chat_history: formattedChatHistory,
+                            image_base64: selectedImageBase64
+                        },
+                        async (response, error) => {
+                            console.log("response", response);
+                            if (error) {
+                                console.error("Error sending message:", error);
+                                return reject(error);
+                            }
+                            const botResponse = response?.bot_response.message || "Không nhận được phản hồi từ bot.";
+                            // Nếu botResponse là object thì chuyển sang chuỗi
+                            const botResponseText =
+                                typeof botResponse === "string" ? botResponse : JSON.stringify(botResponse);
+                            dispatch(
+                                addMessage({
+                                    idChat: chatId,
+                                    userMess: messageToSend,
+                                    botMess: botResponseText,
+                                    botMessageId: response?.bot_response.id,
+                                    userMessageId: response?.user_message.id,
+                                    is_has_image: response?.user_message.is_has_image,
+                                    image_url: response?.user_message.image_url,
+                                })
+                            );
+                            setIsLoading(false);
+                            resolve();
+                        }
+                    );
+                });
+            }
         } catch (err) {
             console.error("Error in handleChatDetail:", err);
         } finally {
@@ -270,6 +312,23 @@ export const ChatDetail = () => {
             });
         } catch (err) {
             console.error("Error updating message:", err);
+        }
+    };
+
+    const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        setSelectedFile(file);
+        setFilePreview(URL.createObjectURL(file));
+    };
+
+    const handleRemoveFile = () => {
+        setSelectedFile(null);
+        setFilePreview(null);
+
+        if (fileUploadRef.current) {
+            fileUploadRef.current.value = "";
         }
     };
 
@@ -466,6 +525,44 @@ export const ChatDetail = () => {
                                                             </div>
                                                         </div>
                                                     ))}
+                                                    {selectedFile && (
+                                                        <>
+                                                            <div
+                                                                className="relative group p-1.5 w-60 flex items-center dark:bg-gray-850 border border-gray-50 dark:border-white/5 rounded-2xl text-left"
+                                                            >
+                                                                <div className="p-3 bg-black/20 dark:bg-white/10 text-white rounded-xl">
+                                                                    {filePreview && (
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5">
+                                                                            <path
+                                                                                fillRule="evenodd"
+                                                                                d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625ZM7.5 15a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 7.5 15Zm.75 2.25a.75.75 0 0 0 0 1.5H12a.75.75 0 0 0 0-1.5H8.25Z"
+                                                                                clipRule="evenodd"
+                                                                            />
+                                                                            <path d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
+                                                                        </svg>
+                                                                    )}
+                                                                </div>
+                                                                <div className="flex flex-col justify-center -space-y-0.5 ml-1 px-2.5 w-full">
+                                                                    <div className="dark:text-gray-100 text-sm font-medium line-clamp-1 mb-1">{selectedFile.name}</div>
+                                                                    <div className="flex justify-between text-gray-500 text-xs line-clamp-1">
+                                                                        File <span className="capitalize">{formatFileSize(selectedFile.size)}</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="absolute -top-1 -right-1">
+                                                                    <button
+                                                                        className="bg-gray-400 text-white border border-white rounded-full group-hover:visible invisible transition"
+                                                                        type="button"
+                                                                        onClick={handleRemoveFile}
+                                                                    >
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                                                                            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                                                                        </svg>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </>
+
+                                                    )}
                                                 </div>
                                                 <div className="flex">
                                                     <div
@@ -513,16 +610,16 @@ export const ChatDetail = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="mt-3 flex items-center justify-between pl-4">
+                                    <div className="mt-3 flex items-center justify-between pl-4 ">
                                         <div className="flex items-center left-content">
                                             <>
-                                                <label htmlFor="image-upload" className="cursor-pointer z-[500]"
+                                                <label htmlFor="image-upload" className="cursor-pointer z-[500] flex items-center space-x-2 text-sm"
                                                     style={{ top: "-2rem", right: "7.75rem" }}
                                                 >
                                                     {/* Biểu tượng upload */}
                                                     <div className="flex">
-                                                        <FiUpload className="w-6 h-6" />
-                                                        <p>Upload image</p>
+                                                        <FaImages className="w-5 h-5" />
+                                                        <p className="ml-2">Upload image</p>
                                                     </div>
                                                 </label>
                                                 <input
@@ -533,6 +630,20 @@ export const ChatDetail = () => {
                                                     id="image-upload"
                                                     style={{ display: "none" }}
                                                     onChange={(e) => handleImageUpload(e, onImageSelected, setImagePreview)}
+                                                />
+                                                <label htmlFor="file-upload" className="cursor-pointer z-[500] flex items-center space-x-2 text-sm"
+                                                    style={{ top: "-2rem", right: "7.75rem" }}
+                                                >
+                                                    <FiUpload className="w-5 h-5 ml-5" />
+                                                    <p>Upload files</p>
+                                                </label>
+                                                <input
+                                                    type="file"
+                                                    accept=".pdf,.txt,.csv,.html"
+                                                    id="file-upload"
+                                                    ref={fileUploadRef}
+                                                    style={{ display: "none" }}
+                                                    onChange={(e) => handleFileSelect(e)}
                                                 />
                                             </>
                                         </div>
