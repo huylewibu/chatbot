@@ -13,6 +13,7 @@ import { APIService } from "../services/APIServices";
 import { useEffect, useState } from "react";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { Params } from "next/dist/server/request/params";
+import { toast } from "react-toastify";
 
 const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
     const [menuOpen, setMenuOpen] = useState<string | null>(null);
@@ -71,26 +72,26 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
     }, [menuOpen]);
 
     const handleSelectChat = async (chatId: string) => {
-        await APIService.getMessagesByChatApi(chatId, (data, error) => {
-            if (error) {
-                console.error("Error loading messages:", error);
-                return;
-            }
-            if (data) {
-                const formattedMessages = data.message_data.map((message) => ({
-                    chatId,
-                    id: message.id,
-                    text: message.message,
-                    isBot: message.is_bot,
-                    createdAt: message.created_at,
-                    sequence: message.sequence,
-                    is_has_image: message.is_has_image,
-                    image_url: message.image_url,
-                }));
-                dispatch(setMessages({ chatId, messages: formattedMessages }));
+        // await APIService.getMessagesByChatApi(chatId, (data, error) => {
+        //     if (error) {
+        //         toast.error(`Không thể tải tin nhắn: ${error.message}`);
+        //         return;
+        //     }
+        //     if (data) {
+        //         const formattedMessages = data.message_data.map((message) => ({
+        //             chatId,
+        //             id: message.id,
+        //             text: message.message,
+        //             isBot: message.is_bot,
+        //             createdAt: message.created_at,
+        //             sequence: message.sequence,
+        //             is_has_image: message.is_has_image,
+        //             image_url: message.image_url,
+        //         }));
+        //         dispatch(setMessages({ chatId, messages: formattedMessages }));
                 navigate.push(`/chat/${chatId}`);
-            }
-        })
+            // }
+        // })
     }
 
     const handleNewChat = () => {
@@ -99,19 +100,21 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
             { title: "New chat" },
             (response, error) => {
                 if (error) {
-                    console.error("Error creating chat:", error.message);
+                    toast.error(`Tạo chat thất bại: ${error.message}`);
                     return;
                 }
 
                 if (response) {
-                    console.log("response: ", response)
                     const newChat = {
                         id: response.chat.id,
                         title: response.chat.title,
                         messages: [],
                     };
                     dispatch(addChat(newChat));
-                    navigate.push(`/chat/${newChat.id}`);
+                    toast.success("Chat đã được tạo thành công!");
+                    setTimeout(() => {
+                        navigate.push(`/chat/${newChat.id}`);
+                    }, 1000)
                 }
             }
         );
@@ -133,26 +136,34 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
             { chat_id: chatId, message: undefined, new_title: newTitle.trim() },
             (response, error) => {
                 if (error) {
-                    console.error("Error renaming chat:", error);
+                    toast.error(`Không thể đổi tên chat: ${error.message}`);
                     return;
                 }
                 if (response) {
                     dispatch(setNameChat({ newTitle: newTitle.trim(), chatId })); // Cập nhật Redux store
-                    setEditingChatId(null); // Kết thúc chế độ chỉnh sửa
+                    setEditingChatId(null); 
+                    toast.success("Tên chat đã được đổi thành công!");
                 }
             }
         );
     };
 
-    const handleRemoveChat = (id: string) => {
-        APIService.removeChatApi(id, (response, error) => {
+    const handleRemoveChat = (chatIdToRemove: string) => {
+        const currentChatId = id;
+        APIService.removeChatApi(chatIdToRemove, (response, error) => {
             if (error) {
-                console.error("Error removing chat:", error);
+                toast.error(`Không thể xóa chat: ${error.message}`, {
+                    autoClose: 4000, pauseOnHover: false
+                });
                 return;
             }
-            if (response) {
-                dispatch(removeChat(id));
+            if (currentChatId === chatIdToRemove) {
+                dispatch(removeChat(chatIdToRemove));
                 navigate.push("/");
+                toast.success("Chat đã được xóa! Bạn đã được chuyển về trang chủ.");
+            } else {
+                dispatch(removeChat(chatIdToRemove));
+                toast.success("Chat đã được xóa!", {autoClose: 4000, pauseOnHover: false});
             }
         })
     };

@@ -185,7 +185,10 @@ declare namespace Interfaces {
     interface UpdateMessageResponse {
         message_id: string;
         new_text: string;
-        bot_response: string;
+        bot_response: {
+            bot_response: string;
+            type?: string;
+        };
     }
 
     // API Register

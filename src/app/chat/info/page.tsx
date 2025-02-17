@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import UserInfo from "@/app/components/UserInfo";
 import { clearAuthData } from "@/app/services/authService";
 import { APIService } from "@/app/services/APIServices";
+import { ToastContainer } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css'
 
 const ChatInfo: React.FC = () => {
     const [userInfo, setUserInfo] = useState<Interfaces.UserInfoResponse | null>(null);
@@ -39,6 +41,7 @@ const ChatInfo: React.FC = () => {
             {userInfo && (
                 <UserInfo>
                     <div className="h-screen flex">
+                        <ToastContainer />
                         <ChatDetail />
                     </div>
                 </UserInfo>

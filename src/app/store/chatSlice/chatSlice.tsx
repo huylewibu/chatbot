@@ -16,7 +16,6 @@ const chatSlice = createSlice({
                 id: uuidv4(),
                 title: "Chat",
                 messages: [],
-                idDb: null
             }
             state.data.push(newChat)
         },

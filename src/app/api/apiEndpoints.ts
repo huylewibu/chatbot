@@ -26,6 +26,7 @@ const APIClient = {
       completion(null, normalizeError(error));
     }
   },
+  
   postForm: async <T> ( // <-- Thêm postForm cho multipart/form-data
     url: string,
     formData: FormData,
@@ -42,6 +43,7 @@ const APIClient = {
       completion(null, normalizeError(error));
     }
   },
+
   delete: async <T> (
     url: string,
     completion: (data: T | null, error: Interfaces.HandelErrors | null) => void
@@ -54,8 +56,6 @@ const APIClient = {
     }
   },
 };
-
-
 
 function isHandelErrors(error: unknown): error is Interfaces.HandelErrors {
   return (
@@ -83,6 +83,4 @@ const normalizeError = (error: unknown): Interfaces.HandelErrors => {
   };
 };
 
-export const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`;
-export const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 export default APIClient

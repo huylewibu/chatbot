@@ -2,6 +2,7 @@
 
 import React from "react";
 import '../pages/ChatDetail.css';
+import { toast } from "react-toastify";
 
 export const handleImageUpload = (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -32,7 +33,7 @@ export const handleImageUpload = (
 
             };
             reader.onerror = (error) => {
-                console.error("Error reading file:", error);
+                toast.error(`Lỗi khi tải ảnh: ${error}`);
             };
             reader.readAsDataURL(file);
         })

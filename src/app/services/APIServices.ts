@@ -90,7 +90,7 @@ export const APIService = {
         formData: FormData,
         completion: (data: Interfaces.ChatResponse | null, error: Interfaces.HandelErrors | null) => void
     ) {
-        APIClient.postForm("/api/upload-files/", formData, completion); // Sử dụng postForm thay vì post
+        APIClient.postForm("/api/upload-files/", formData, completion); 
     },
 
     // Generate image

@@ -9,7 +9,7 @@ import Sidebar from "../components/Sidebar";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { addChat, addMessage, setNameChat, updateMessage } from "../store/chatSlice/chatSlice";
+import { addChat, addMessage, loadChat, setMessages, setNameChat, updateMessage } from "../store/chatSlice/chatSlice";
 import { RootState, selectChatById } from "../store/app";
 import { APIService } from "../services/APIServices";
 import { Params } from "next/dist/server/request/params";
@@ -20,38 +20,24 @@ import { handleImageUpload } from "../components/ImageUploader";
 import { FaImages } from "react-icons/fa";
 import MarkdownRenderer from "../components/MarkdownRenderer";
 import { formatFileSize } from "../components/formatFileSize";
+import { toast } from "react-toastify";
 
 export const ChatDetail = () => {
-    const [inputChat, setInputChat] = useState<string>("");
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+    const [inputChat, setInputChat] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [editMode, setEditMode] = useState<Interfaces.EditMode>({ isEditing: false, messageId: "", text: "" });
     const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
-    const inputRef = useRef<HTMLTextAreaElement>(null);
     const [textareaHeight, setTextareaHeight] = useState('auto');
     const [selectedImageBase64, setSelectedImageBase64] = useState<string[]>([]);
     const [imagePreview, setImagePreview] = useState<string[]>([]);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
-    const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [filePreview, setFilePreview] = useState<string | null>(null);
+    const inputRef = useRef<HTMLTextAreaElement>(null);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
     const fileUploadRef = useRef<HTMLInputElement | null>(null);
-
-    useEffect(() => {
-        console.log("selectedFile", selectedFile)
-    }, [selectedFile])
-
-    const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        const textarea = e.target;
-        setInputChat(textarea.value);
-
-        textarea.style.height = 'auto';
-
-        const newHeight = Math.min(textarea.scrollHeight, 200); // Giới hạn tối đa 200px
-        textarea.style.height = `${newHeight}px`;
-
-        setTextareaHeight(`${newHeight}px`);
-    };
+    const { user } = useSelector((state: RootState) => state.auth);
 
     const { id } = useParams<Params>();
     const router = useRouter();
@@ -66,6 +52,79 @@ export const ChatDetail = () => {
         scrollToBottom();
     }, [messageDetail]);
 
+    useEffect(() => {
+        const chatId = id ? (Array.isArray(id) ? id[0] : id) : null;
+      
+        if (chatId) {
+          APIService.getMessagesByChatApi(chatId, (data, error) => {
+            if (error) {
+              toast.error(`Không thể tải tin nhắn: ${error.message}`);
+              return;
+            }
+            if (data) {
+              const formattedMessages = data.message_data.map((message) => ({
+                chatId,
+                id: message.id,
+                text: message.message,
+                isBot: message.is_bot,
+                createdAt: message.created_at,
+                sequence: message.sequence,
+                is_has_image: message.is_has_image,
+                image_url: message.image_url,
+              }));
+              dispatch(setMessages({ chatId, messages: formattedMessages }));
+              
+              APIService.loadChatApi((dataResponse, error) => {
+                if (error) {
+                  console.error("Error loading chats:", error);
+                  return;
+                }
+                if (dataResponse) {
+                  const userChats = dataResponse.chats.filter(
+                    (chat) => chat.username === user?.username
+                  );
+                  const formattedChats = userChats.map((chat) => {
+                    // Nếu đây là chat đang mở, dùng tin nhắn vừa lấy từ getMessagesByChatApi
+                    if (chat.id === chatId) {
+                      return {
+                        ...chat,
+                        messages: formattedMessages,
+                      };
+                    }
+                    // Các chat khác giữ messages nếu có hoặc mảng rỗng
+                    return {
+                      ...chat,
+                      messages: chat.messages || [],
+                    };
+                  });
+                  dispatch(loadChat(formattedChats));
+                }
+              });
+            }
+          });
+        } else {
+          // Nếu không có id, chỉ cần load danh sách chat cho sidebar
+          APIService.loadChatApi((dataResponse, error) => {
+            if (error) {
+              console.error("Error loading chats:", error);
+              return;
+            }
+            if (dataResponse) {
+              const userChats = dataResponse.chats.filter(
+                (chat) => chat.username === user?.username
+              );
+              const formattedChats = userChats.map((chat) => ({
+                ...chat,
+                messages: chat.messages || [],
+              }));
+              dispatch(loadChat(formattedChats));
+            }
+          });
+        }
+      }, [dispatch, user, id]);
+      
+      
+
     const handleEditClick = (messageId: string, currentText: string) => {
         setEditMode({ isEditing: true, messageId, text: currentText });
     };
@@ -74,6 +133,18 @@ export const ChatDetail = () => {
         if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
         }
+    };
+
+    const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const textarea = e.target;
+        setInputChat(textarea.value);
+
+        textarea.style.height = 'auto';
+
+        const newHeight = Math.min(textarea.scrollHeight, 200); // Giới hạn tối đa 200px
+        textarea.style.height = `${newHeight}px`;
+
+        setTextareaHeight(`${newHeight}px`);
     };
 
     const handlePasteImage = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
@@ -123,6 +194,7 @@ export const ChatDetail = () => {
         if (fileInputRef.current) {
             fileInputRef.current.value = "";
         }
+        toast.success("Hình ảnh đã xóa thành công!", { autoClose: 3000, pauseOnHover: false });
     };
 
     // Hàm xử lý gửi tin nhắn từ input
@@ -133,7 +205,10 @@ export const ChatDetail = () => {
 
         // Nếu có câu hỏi trong query string thì ưu tiên sử dụng, nếu không thì dùng từ textarea
         const messageToSend = initialQuestion || inputChat.trim();
-        if (!messageToSend && !selectedImageBase64) return;
+        if (!messageToSend && !selectedImageBase64) {
+            toast.error("Vui lòng nhập tin nhắn hoặc chọn hình ảnh!", { autoClose: 3000, pauseOnHover: false })
+            return;
+        }
 
         setIsLoading(true);
         // Nếu đang gửi từ textarea thì xóa nội dung (để tránh gửi lại khi đã lưu trong query string)
@@ -149,7 +224,7 @@ export const ChatDetail = () => {
                 chatId = await new Promise<string>((resolve, reject) => {
                     APIService.addChatApi({ title: "New chat" }, (response, error) => {
                         if (error) {
-                            console.error("Error creating chat:", error.message);
+                            toast.error(`Không thể tạo cuộc trò chuyện: ${error.message}`, { autoClose: 3000, pauseOnHover: false });
                             setIsLoading(false);
                             return reject(error);
                         }
@@ -163,6 +238,7 @@ export const ChatDetail = () => {
                                 })
                             );
                             resolve(response.chat.id);
+                            toast.success("Cuộc trò chuyện mới đã được tạo!", { autoClose: 3000, pauseOnHover: false });
                         }
                     });
                 });
@@ -207,7 +283,6 @@ export const ChatDetail = () => {
 
                 await new Promise<void>((resolve, reject) => {
                     APIService.uploadFileApi(formData, (fileResponse, fileError) => {
-                        console.log(fileResponse);
                         if (fileError) {
                             console.error("Lỗi khi upload file:", fileError.message);
                             setIsLoading(false);
@@ -244,7 +319,6 @@ export const ChatDetail = () => {
                             image_base64: selectedImageBase64
                         },
                         async (response, error) => {
-                            console.log("response", response);
                             if (error) {
                                 console.error("Error sending message:", error);
                                 return reject(error);
@@ -271,7 +345,7 @@ export const ChatDetail = () => {
                 });
             }
         } catch (err) {
-            console.error("Error in handleChatDetail:", err);
+            toast.error(`Lỗi xảy ra khi gửi tin nhắn: ${err}`, { autoClose: 3000, pauseOnHover: false });
         } finally {
             setIsLoading(false);
         }
@@ -295,23 +369,26 @@ export const ChatDetail = () => {
             };
 
             APIService.updateMessageApi(payload, (response, error) => {
+                console.log(response);
                 if (error) {
-                    console.error("Error updating message:", error);
+                    toast.error(`Lỗi khi chỉnh sửa tin nhắn mới: ${error}`, { autoClose: 3000, pauseOnHover: false });
                     return;
                 }
 
                 const { bot_response } = response || {};
+                const actualBotResponse = bot_response?.bot_response || "Không nhận được phản hồi từ bot.";
                 dispatch(updateMessage({
                     idChat: chatId,
                     messageId: editMode.messageId,
                     newText: editMode.text.trim(),
-                    botResponse: bot_response,
+                    botResponse: actualBotResponse,
                 }));
 
                 setEditMode({ isEditing: false, messageId: "", text: "" }); // Reset trạng thái chỉnh sửa
+                toast.success(`Tin nhắn đã được chỉnh sửa thành công!`, { autoClose: 3000, pauseOnHover: false });
             });
         } catch (err) {
-            console.error("Error updating message:", err);
+            toast.error(`Lỗi khi chỉnh sửa tin nhắn: ${err}`, { autoClose: 3000, pauseOnHover: false });
         }
     };
 
@@ -330,6 +407,7 @@ export const ChatDetail = () => {
         if (fileUploadRef.current) {
             fileUploadRef.current.value = "";
         }
+        toast.success(`Tập tin đã được xóa thành công!`, { autoClose: 3000, pauseOnHover: false });
     };
 
     return (
