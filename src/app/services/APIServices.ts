@@ -54,6 +54,14 @@ export const APIService = {
         APIClient.post("/api/chat/update", data, completion);
     },
 
+    // Gọi API gửi OTP
+    sendOTPApi(
+        data: Interfaces.SendOTPRequest,
+        completion: (data: Interfaces.SendOTPResponse | null, error: Interfaces.HandelErrors | null) => void
+    ) {
+        APIClient.post("/api/chat/send-otp", data, completion);
+    },
+
     // Gọi API đăng ký
     registerApi(
         data: Interfaces.RegisterRequest,

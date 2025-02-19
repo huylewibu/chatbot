@@ -191,11 +191,25 @@ declare namespace Interfaces {
         };
     }
 
+    // API Send OTP
+    interface SendOTPRequest {
+        username: string;
+        email: string;
+        password: string;
+    }
+
+    interface SendOTPResponse {
+        message: string;
+        email: string;
+    }
+
+
     // API Register
     interface RegisterRequest {
         username: string;
         email: string;
         password: string;
+        otpCode: string;
     }
 
     interface RegisterResponse {

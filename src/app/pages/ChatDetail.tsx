@@ -282,6 +282,8 @@ export const ChatDetail = () => {
                 formData.append("chat_id", chatId as string);
 
                 await new Promise<void>((resolve, reject) => {
+                    setFilePreview(null)
+                    setSelectedFile(null)
                     APIService.uploadFileApi(formData, (fileResponse, fileError) => {
                         if (fileError) {
                             console.error("Lỗi khi upload file:", fileError.message);
