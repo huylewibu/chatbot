@@ -59,7 +59,7 @@ const LoginForm: React.FC = () => {
                 { username, password },
                 (response, error) => {
                     if (error) {
-                        console.log(error);
+                        console.error(error);
                         const message =
                             error.response?.data?.detail || "Invalid username or password!";
                         setError(message);

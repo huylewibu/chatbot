@@ -40,7 +40,7 @@ export const isAuthenticated = () => {
     }
     return true;
   } catch (error) {
-    console.log(error)
+    console.error(error)
     return false; // Token không hợp lệ
   }
 };

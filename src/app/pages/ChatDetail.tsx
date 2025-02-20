@@ -372,7 +372,6 @@ export const ChatDetail = () => {
             };
 
             APIService.updateMessageApi(payload, (response, error) => {
-                console.log(response);
                 if (error) {
                     toast.error(t("error.edit_message", {error: error}), { autoClose: 3000, pauseOnHover: false });
                     return;

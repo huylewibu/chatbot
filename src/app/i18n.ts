@@ -28,7 +28,8 @@ export default async function initTranslations(
   await instance.init({
     lng: locale,
     resources,
-    fallbackLng: i18nConfig.defaultLocale,
+    // fallbackLng: i18nConfig.defaultLocale,
+    fallbackLng: ['vi'],
     supportedLngs: i18nConfig.locales,
     defaultNS: namespaces[0],
     fallbackNS: namespaces[0],
