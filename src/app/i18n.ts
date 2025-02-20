@@ -20,7 +20,7 @@ export default async function initTranslations(
       resourcesToBackend(
         // Thêm kiểu (language: string, namespace: string)
         (language: string, namespace: string) =>
-          import(`@/locales/${language}/${namespace}.json`)
+          import(`../../locales/${language}/${namespace}.json`)
       )
     );
   }
