@@ -7,13 +7,14 @@ import IconChat from "../assets/chat.png";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import { addChat, loadChat, removeChat, setMessages, setNameChat } from "../store/chatSlice/chatSlice";
+import { addChat, loadChat, removeChat, setNameChat } from "../store/chatSlice/chatSlice";
 import { RootState } from "../store/app";
 import { APIService } from "../services/APIServices";
 import { useEffect, useState } from "react";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { Params } from "next/dist/server/request/params";
 import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
 
 const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
     const [menuOpen, setMenuOpen] = useState<string | null>(null);
@@ -24,12 +25,13 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
     const { user } = useSelector((state: RootState) => state.auth);
     const { data } = useSelector((state: RootState) => state.chat);
     const { id } = useParams<Params>();
+    const { t } = useTranslation()
 
     useEffect(() => {
         if (!id) {
             APIService.loadChatApi((dataResponse, error) => {
                 if (error) {
-                    console.error("Error loading chats:", error);
+                    toast.error(t("error.load_chat", { error: error }), { autoClose: 3000, pauseOnHover: false });
                     return;
                 }
                 if (dataResponse) {
@@ -72,26 +74,7 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
     }, [menuOpen]);
 
     const handleSelectChat = async (chatId: string) => {
-        // await APIService.getMessagesByChatApi(chatId, (data, error) => {
-        //     if (error) {
-        //         toast.error(`Không thể tải tin nhắn: ${error.message}`);
-        //         return;
-        //     }
-        //     if (data) {
-        //         const formattedMessages = data.message_data.map((message) => ({
-        //             chatId,
-        //             id: message.id,
-        //             text: message.message,
-        //             isBot: message.is_bot,
-        //             createdAt: message.created_at,
-        //             sequence: message.sequence,
-        //             is_has_image: message.is_has_image,
-        //             image_url: message.image_url,
-        //         }));
-        //         dispatch(setMessages({ chatId, messages: formattedMessages }));
-                navigate.push(`/chat/${chatId}`);
-            // }
-        // })
+        navigate.push(`/chat/${chatId}`);
     }
 
     const handleNewChat = () => {
@@ -100,7 +83,7 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
             { title: "New chat" },
             (response, error) => {
                 if (error) {
-                    toast.error(`Tạo chat thất bại: ${error.message}`);
+                    toast.error(t("error.create_chat", {error: error.message}));
                     return;
                 }
 
@@ -111,7 +94,7 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
                         messages: [],
                     };
                     dispatch(addChat(newChat));
-                    toast.success("Chat đã được tạo thành công!");
+                    toast.success(t("success.create_chat"));
                     setTimeout(() => {
                         navigate.push(`/chat/${newChat.id}`);
                     }, 1000)
@@ -136,13 +119,13 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
             { chat_id: chatId, message: undefined, new_title: newTitle.trim() },
             (response, error) => {
                 if (error) {
-                    toast.error(`Không thể đổi tên chat: ${error.message}`);
+                    toast.error(t("error.rename_chat", {error: error.message}));
                     return;
                 }
                 if (response) {
                     dispatch(setNameChat({ newTitle: newTitle.trim(), chatId })); // Cập nhật Redux store
-                    setEditingChatId(null); 
-                    toast.success("Tên chat đã được đổi thành công!");
+                    setEditingChatId(null);
+                    toast.success(t("success.rename_chat"));
                 }
             }
         );
@@ -152,7 +135,7 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
         const currentChatId = id;
         APIService.removeChatApi(chatIdToRemove, (response, error) => {
             if (error) {
-                toast.error(`Không thể xóa chat: ${error.message}`, {
+                toast.error(t("error.delete_chat", {error: error.message}), {
                     autoClose: 4000, pauseOnHover: false
                 });
                 return;
@@ -160,10 +143,10 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
             if (currentChatId === chatIdToRemove) {
                 dispatch(removeChat(chatIdToRemove));
                 navigate.push("/");
-                toast.success("Chat đã được xóa! Bạn đã được chuyển về trang chủ.");
+                toast.success(t("success.delete_chat_move_main_menu"), { autoClose: 4000, pauseOnHover: false });
             } else {
                 dispatch(removeChat(chatIdToRemove));
-                toast.success("Chat đã được xóa!", {autoClose: 4000, pauseOnHover: false});
+                toast.success(t("success.delete_chat"), { autoClose: 4000, pauseOnHover: false });
             }
         })
     };
@@ -178,7 +161,7 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
                     href="/chat/info"
                     className="px-3 py-2 mb-4 inline-flex items-center bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-ml text-gray-800 dark:text-gray-300 rounded-md transition duration-200"
                 >
-                    <p>Trang chủ</p>
+                    <p>{t("Home")}</p>
                 </Link>
 
                 <button
@@ -186,10 +169,10 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
                     onClick={handleNewChat}
                 >
                     <Image src={IconPlus} alt="plus icon" className="h-4 w-4" />
-                    <p>Cuộc trò chuyện mới</p>
+                    <p>{t("Create a Conversation")}</p>
                 </button>
                 <div className="space-y-4">
-                    <p>Gần đây:</p>
+                    <p>{t("Recently")}:</p>
                     <div className="flex flex-col space-y-6">
                         {data.map((chat) => (
                             <div key={chat?.id} className="relative">
@@ -242,7 +225,7 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
                                                 setMenuOpen(null);
                                             }}
                                         >
-                                            Rename
+                                            {t("Rename")}
                                         </button>
                                         <button
                                             className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -251,7 +234,7 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
                                                 setMenuOpen(null); // Đóng menu sau khi chọn
                                             }}
                                         >
-                                            Delete
+                                            {t("Delete")}
                                         </button>
                                     </div>
                                 )}

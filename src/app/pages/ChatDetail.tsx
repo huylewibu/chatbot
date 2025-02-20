@@ -21,6 +21,7 @@ import { FaImages } from "react-icons/fa";
 import MarkdownRenderer from "../components/MarkdownRenderer";
 import { formatFileSize } from "../components/formatFileSize";
 import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
 
 export const ChatDetail = () => {
     const [inputChat, setInputChat] = useState("");
@@ -37,6 +38,7 @@ export const ChatDetail = () => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const fileUploadRef = useRef<HTMLInputElement | null>(null);
+    const {t} = useTranslation()
     const { user } = useSelector((state: RootState) => state.auth);
 
     const { id } = useParams<Params>();
@@ -58,7 +60,7 @@ export const ChatDetail = () => {
         if (chatId) {
           APIService.getMessagesByChatApi(chatId, (data, error) => {
             if (error) {
-              toast.error(`Không thể tải tin nhắn: ${error.message}`);
+              toast.error(t("error.load_message", { error: error.message }));
               return;
             }
             if (data) {
@@ -194,9 +196,8 @@ export const ChatDetail = () => {
         if (fileInputRef.current) {
             fileInputRef.current.value = "";
         }
-        toast.success("Hình ảnh đã xóa thành công!", { autoClose: 3000, pauseOnHover: false });
+        toast.success(t("success.remove_image"), { autoClose: 3000, pauseOnHover: false });
     };
-
     // Hàm xử lý gửi tin nhắn từ input
     const handleChatDetail = async () => {
         // Kiểm tra query string để lấy câu hỏi ban đầu (nếu có)
@@ -206,7 +207,7 @@ export const ChatDetail = () => {
         // Nếu có câu hỏi trong query string thì ưu tiên sử dụng, nếu không thì dùng từ textarea
         const messageToSend = initialQuestion || inputChat.trim();
         if (!messageToSend && !selectedImageBase64) {
-            toast.error("Vui lòng nhập tin nhắn hoặc chọn hình ảnh!", { autoClose: 3000, pauseOnHover: false })
+            toast.error(t("error.empty_input_and_image"), { autoClose: 3000, pauseOnHover: false })
             return;
         }
 
@@ -224,7 +225,7 @@ export const ChatDetail = () => {
                 chatId = await new Promise<string>((resolve, reject) => {
                     APIService.addChatApi({ title: "New chat" }, (response, error) => {
                         if (error) {
-                            toast.error(`Không thể tạo cuộc trò chuyện: ${error.message}`, { autoClose: 3000, pauseOnHover: false });
+                            toast.error(t("error.gender_chat", {error: error.message}), { autoClose: 3000, pauseOnHover: false });
                             setIsLoading(false);
                             return reject(error);
                         }
@@ -238,7 +239,7 @@ export const ChatDetail = () => {
                                 })
                             );
                             resolve(response.chat.id);
-                            toast.success("Cuộc trò chuyện mới đã được tạo!", { autoClose: 3000, pauseOnHover: false });
+                            toast.success(t("succsess.gender_chat"), { autoClose: 3000, pauseOnHover: false });
                         }
                     });
                 });
@@ -347,7 +348,7 @@ export const ChatDetail = () => {
                 });
             }
         } catch (err) {
-            toast.error(`Lỗi xảy ra khi gửi tin nhắn: ${err}`, { autoClose: 3000, pauseOnHover: false });
+            toast.error(t("error.sending_message", {err: err}), { autoClose: 3000, pauseOnHover: false });
         } finally {
             setIsLoading(false);
         }
@@ -373,7 +374,7 @@ export const ChatDetail = () => {
             APIService.updateMessageApi(payload, (response, error) => {
                 console.log(response);
                 if (error) {
-                    toast.error(`Lỗi khi chỉnh sửa tin nhắn mới: ${error}`, { autoClose: 3000, pauseOnHover: false });
+                    toast.error(t("error.edit_message", {error: error}), { autoClose: 3000, pauseOnHover: false });
                     return;
                 }
 
@@ -387,10 +388,10 @@ export const ChatDetail = () => {
                 }));
 
                 setEditMode({ isEditing: false, messageId: "", text: "" }); // Reset trạng thái chỉnh sửa
-                toast.success(`Tin nhắn đã được chỉnh sửa thành công!`, { autoClose: 3000, pauseOnHover: false });
+                toast.success(t("success.edit_message"), { autoClose: 3000, pauseOnHover: false });
             });
-        } catch (err) {
-            toast.error(`Lỗi khi chỉnh sửa tin nhắn: ${err}`, { autoClose: 3000, pauseOnHover: false });
+        } catch (error) {
+            toast.error(t("error.edit_message", {error: error}), { autoClose: 3000, pauseOnHover: false });
         }
     };
 
@@ -409,7 +410,7 @@ export const ChatDetail = () => {
         if (fileUploadRef.current) {
             fileUploadRef.current.value = "";
         }
-        toast.success(`Tập tin đã được xóa thành công!`, { autoClose: 3000, pauseOnHover: false });
+        toast.success(t("success.delete_file"), { autoClose: 3000, pauseOnHover: false });
     };
 
     return (
@@ -542,9 +543,9 @@ export const ChatDetail = () => {
                         <div className="flex flex-col space-y-5">
                             <div className="space-y-1">
                                 <h2 className="bg-gradient-to-r from-blue-600 via-green-500 to-indigo-400 text-[30px] inline-block text-transparent bg-clip-text font-bold">
-                                    Xin Chào
+                                    {t('Hello')}
                                 </h2>
-                                <p className="text-3xl">Hôm nay tôi có thể giúp gì cho bạn?</p>
+                                <p className="text-3xl">{t("What can I help you today?")}</p>
                             </div>
                             <div className="flex items-center space-x-3" style={{ marginBottom: "100px" }}>
                                 <div className="w-[200px] h-[200px] bg-primaryBg-sidebar flex items-center justify-center rounded-lg">
@@ -576,7 +577,8 @@ export const ChatDetail = () => {
                                 </div>
                             </div>
                             <div className="px-4">
-                                <div className="max-w-6xl dynamic-textarea mx-auto inset-x-0 messageInput bg-[#F7F8FC] dark:bg-[#2A2A2A] dark:text-gray-100 svelte-zn7un9">
+                                <div className="max-w-6xl dynamic-textarea mx-auto inset-x-0 messageInput bg-[#F7F8FC] 
+                                dark:bg-[#2A2A2A] dark:text-gray-100 svelte-zn7un9 border border-black dark:border-none">
                                     <div>
                                         <input type="file" id="filesUpload" multiple style={{ display: 'none' }} />
                                         <div className="flex w-full gap-1.5" data-gtm-form-interact-id="0">
@@ -653,7 +655,7 @@ export const ChatDetail = () => {
                                                     <textarea
                                                         ref={inputRef}
                                                         value={inputChat}
-                                                        placeholder={isLoading ? "" : "Nhập câu hỏi tại đây"}
+                                                        placeholder={isLoading ? "" : t("Enter question")}
 
                                                         className="scrollbar-hidden bg-[#F7F8FC] dark:bg-[#2A2A2A] dark:text-gray-100 outline-none w-full rounded-xl pl-4 resize-none h-[24px] unicode"
                                                         rows={1}
@@ -699,7 +701,7 @@ export const ChatDetail = () => {
                                                     {/* Biểu tượng upload */}
                                                     <div className="flex">
                                                         <FaImages className="w-5 h-5" />
-                                                        <p className="ml-2">Upload image</p>
+                                                        <p className="ml-2">{t("Upload image")}</p>
                                                     </div>
                                                 </label>
                                                 <input
@@ -715,7 +717,7 @@ export const ChatDetail = () => {
                                                     style={{ top: "-2rem", right: "7.75rem" }}
                                                 >
                                                     <FiUpload className="w-5 h-5 ml-5" />
-                                                    <p>Upload files</p>
+                                                    <p>{t("Upload files")}</p>
                                                 </label>
                                                 <input
                                                     type="file"

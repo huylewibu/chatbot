@@ -4,27 +4,58 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useDispatch, useSelector } from "react-redux";
-import { registerFailure, registerSuccess } from "../store/authSlice/authSlice";
-import { RootState } from "../store/app";
-import ThemeSwitcher from "../components/ThemeSwitcher";
-import { APIService } from "../services/APIServices";
+import { registerFailure, registerSuccess } from "../../store/authSlice/authSlice";
+import { RootState } from "../../store/app";
+import ThemeSwitcher from "../../components/ThemeSwitcher";
+import { APIService } from "../../services/APIServices";
 import { ToastContainer, toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
+import LanguageChanger from "../../components/LanguageChanger";
 
 const RegisterForm: React.FC = () => {
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const {t, i18n} = useTranslation()
     const [isLoading, setIsLoading] = useState(false);
     const [otpArray, setOtpArray] = useState(Array(6).fill(""));
     const [otpCode, setOtpCode] = useState("");
     const [otpSent, setOtpSent] = useState(false);
     const [timeLeft, setTimeLeft] = useState(300); // 5 phút
+    const [language, setLanguage] = useState("");
+    const [isLanguageLoaded, setIsLanguageLoaded] = useState(false);
+    const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+    const [activeDropdown, setActiveDropdown] = useState(false);
 
     const dispatch = useDispatch();
     const router = useRouter();
 
     const error = useSelector((state: RootState) => state.auth.error);
+
+    useEffect(() => {
+        if (language) {
+            i18n.changeLanguage(language);
+        }
+    }, [language]);
+
+    useEffect(() => {
+        const storedLanguage = localStorage.getItem('language');
+        if (storedLanguage) {
+            setLanguage(storedLanguage);
+        } else {
+            setLanguage('vi');
+        }
+        setIsLanguageLoaded(true);
+    }, []);
+
+    const toggleMobileNav = () => {
+        setIsMobileNavOpen(!isMobileNavOpen);
+    };
+
+    const toggleDropdown = () => {
+        setActiveDropdown(!activeDropdown);
+    };
 
     useEffect(() => {
         if (otpSent && timeLeft > 0) {
@@ -183,17 +214,24 @@ const RegisterForm: React.FC = () => {
         <div className="relative flex justify-center items-center min-h-screen bg-white dark:bg-gray-900 transition-colors duration-300">
             <ToastContainer />
             <div className="absolute top-4 right-4">
+                <LanguageChanger
+                    language={language}
+                    setLanguage={setLanguage}
+                    isLanguageLoaded={isLanguageLoaded}
+                    activeDropdown={activeDropdown}
+                    toggleDropdown={toggleDropdown}
+                />
                 <ThemeSwitcher />
             </div>
             <div className="w-full max-w-md p-8 bg-white shadow-md rounded-lg">
-                <h1 className="text-2xl font-bold text-center mb-6 text-gray-700">Register</h1>
+                <h1 className="text-2xl font-bold text-center mb-6 text-gray-700">{t("Register")}</h1>
                 <form onSubmit={handleRegister} className="space-y-6">
                     <div>
                         <label
                             htmlFor="username"
                             className="block text-sm font-medium text-gray-700"
                         >
-                            Username
+                            {t("Username")}
                         </label>
                         <input
                             id="username"
@@ -209,7 +247,7 @@ const RegisterForm: React.FC = () => {
                             htmlFor="password"
                             className="block text-sm font-medium text-gray-700"
                         >
-                            Password
+                            {t("Password")}
                         </label>
                         <input
                             id="password"
@@ -225,7 +263,7 @@ const RegisterForm: React.FC = () => {
                             htmlFor="confirmPassword"
                             className="block text-sm font-medium text-gray-700"
                         >
-                            Confirm Password
+                            {t("Confirm Password")}
                         </label>
                         <input
                             id="confirmPassword"
@@ -295,22 +333,22 @@ const RegisterForm: React.FC = () => {
                                 onClick={handleSendOTP}
                                 className="flex-grow py-3 bg-blue-500 text-white rounded-lg"
                             >
-                                Gửi mã OTP tới Email của bạn
+                                {t("Send OTP to Email")}
                             </button>
                         ) : (
                             <button
                                 type="submit"
                                 className="flex-grow py-3 bg-green-500 text-white rounded-lg"
                             >
-                                Đăng ký
+                                {t("Register")}
                             </button>
                         )}
                     </div>
                 </form>
                 <p className="text-sm text-center text-gray-500 mt-6">
-                    Already have an account&#63;{" "}
+                    {t("Already have an account?")}{" "}
                     <Link href="/login" className="text-blue-500 hover:underline">
-                        Login here
+                        {t('Login here')}
                     </Link>
                 </p>
             </div>

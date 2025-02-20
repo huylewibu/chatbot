@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import LoginForm from "./components/Login";
-import { isAuthenticated } from "./services/authService";
+import LoginForm from "../components/Login";
+import { isAuthenticated } from "../services/authService";
 
 const Home = () => {
   const [loading, setLoading] = useState(true);
@@ -16,9 +16,9 @@ const Home = () => {
         const token = localStorage.getItem("accessToken");
 
         if (token) {
-          const authStatus = await isAuthenticated(); // Nếu là hàm bất đồng bộ
+          const authStatus = await isAuthenticated(); 
           if (authStatus) {
-            router.push("/chat/info"); // Nếu đã đăng nhập, chuyển hướng
+            router.push("/chat/info"); 
             return;
           }
         }

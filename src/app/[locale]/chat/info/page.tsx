@@ -7,6 +7,7 @@ import { clearAuthData } from "@/app/services/authService";
 import { APIService } from "@/app/services/APIServices";
 import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css'
+import LanguageChanger from "@/app/components/LanguageChanger";
 
 const ChatInfo: React.FC = () => {
     const [userInfo, setUserInfo] = useState<Interfaces.UserInfoResponse | null>(null);

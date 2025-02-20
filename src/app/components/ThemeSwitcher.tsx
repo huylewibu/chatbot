@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect } from "react";
 import { FaMoon, FaSun } from "react-icons/fa";
 
