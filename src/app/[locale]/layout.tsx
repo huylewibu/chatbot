@@ -35,10 +35,10 @@ export async function generateMetadata({ params }: RootLayoutProps) {
   const { t } = await initTranslations(locale, ['ChatbotDemoWebApp']);
 
   return {
-    title: t("metadata.title", { defaultValue: "Chatbot Demo Web App" }),
+    title: t("metadata.title", { defaultValue: t("metadata.title") }),
     description: t("metadata.description", { defaultValue: t("metadata.description") }),
     openGraph: {
-      title: t("metadata.title", { defaultValue: "Chatbot Demo Web App" }),
+      title: t("metadata.title", { defaultValue: t("metadata.title") }),
       description: t("metadata.description", { defaultValue: t("metadata.description") }),
       url: `https://www.chatbothuyleui.xyz/${locale}`,
       type: "website",
