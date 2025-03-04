@@ -79,7 +79,7 @@ const LoginForm: React.FC = () => {
 
                         dispatch(loginSuccess(userInfo));
 
-                        router.push("/chat/info"); // Điều hướng sau khi login
+                        router.push("/chat/info"); 
                     }
                 }
             );

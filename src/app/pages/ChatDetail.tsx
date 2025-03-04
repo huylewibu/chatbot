@@ -5,7 +5,6 @@ import ImgTemp from "../assets/temp.jpeg";
 import IconMenu from "../assets/menu.png";
 import IconStar from "../assets/star.png";
 import Image from "next/image";
-import Sidebar from "../components/Sidebar";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -14,10 +13,11 @@ import { RootState, selectChatById } from "../store/app";
 import { APIService } from "../services/APIServices";
 import { Params } from "next/dist/server/request/params";
 import { GoPencil } from "react-icons/go";
-import './ChatDetail.css';
 import { FiUpload } from "react-icons/fi";
-import { handleImageUpload } from "../components/ImageUploader";
 import { FaImages } from "react-icons/fa";
+import './ChatDetail.css';
+import Sidebar from "../components/Sidebar";
+import { handleImageUpload } from "../components/ImageUploader";
 import MarkdownRenderer from "../components/MarkdownRenderer";
 import { formatFileSize } from "../components/formatFileSize";
 import { toast } from "react-toastify";
@@ -38,7 +38,7 @@ export const ChatDetail = () => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const fileUploadRef = useRef<HTMLInputElement | null>(null);
-    const {t} = useTranslation()
+    const { t } = useTranslation()
     const { user } = useSelector((state: RootState) => state.auth);
 
     const { id } = useParams<Params>();
@@ -56,79 +56,82 @@ export const ChatDetail = () => {
 
     useEffect(() => {
         const chatId = id ? (Array.isArray(id) ? id[0] : id) : null;
-      
+
         if (chatId) {
-          APIService.getMessagesByChatApi(chatId, (data, error) => {
-            if (error) {
-              toast.error(t("error.load_message", { error: error.message }));
-              return;
-            }
-            if (data) {
-              const formattedMessages = data.message_data.map((message) => ({
-                chatId,
-                id: message.id,
-                text: message.message,
-                isBot: message.is_bot,
-                createdAt: message.created_at,
-                sequence: message.sequence,
-                is_has_image: message.is_has_image,
-                image_url: message.image_url,
-              }));
-              dispatch(setMessages({ chatId, messages: formattedMessages }));
-              
-              APIService.loadChatApi((dataResponse, error) => {
+            APIService.getMessagesByChatApi(chatId, (data, error) => {
                 if (error) {
-                  console.error("Error loading chats:", error);
-                  return;
+                    toast.error(t("error.load_message", { error: error.message }));
+                    return;
+                }
+                if (data) {
+                    const formattedMessages = data.message_data.map((message) => ({
+                        chatId,
+                        id: message.id,
+                        text: message.message,
+                        isBot: message.is_bot,
+                        createdAt: message.created_at,
+                        sequence: message.sequence,
+                        is_has_image: message.is_has_image,
+                        image_url: message.image_url,
+                    }));
+                    dispatch(setMessages({ chatId, messages: formattedMessages }));
+
+                    APIService.loadChatApi((dataResponse, error) => {
+                        if (error) {
+                            console.error("Error loading chats:", error);
+                            return;
+                        }
+                        if (dataResponse) {
+                            const userChats = dataResponse.chats.filter(
+                                (chat) => chat.username === user?.username
+                            );
+                            const formattedChats = userChats.map((chat) => {
+                                // Nếu đây là chat đang mở, dùng tin nhắn vừa lấy từ getMessagesByChatApi
+                                if (chat.id === chatId) {
+                                    return {
+                                        ...chat,
+                                        messages: formattedMessages,
+                                    };
+                                }
+                                // Các chat khác giữ messages nếu có hoặc mảng rỗng
+                                return {
+                                    ...chat,
+                                    messages: chat.messages || [],
+                                };
+                            });
+                            dispatch(loadChat(formattedChats));
+                        }
+                    });
+                }
+            });
+        } else {
+            // Nếu không có id, chỉ cần load danh sách chat cho sidebar
+            APIService.loadChatApi((dataResponse, error) => {
+                if (error) {
+                    console.error("Error loading chats:", error);
+                    return;
                 }
                 if (dataResponse) {
-                  const userChats = dataResponse.chats.filter(
-                    (chat) => chat.username === user?.username
-                  );
-                  const formattedChats = userChats.map((chat) => {
-                    // Nếu đây là chat đang mở, dùng tin nhắn vừa lấy từ getMessagesByChatApi
-                    if (chat.id === chatId) {
-                      return {
+                    const userChats = dataResponse.chats.filter(
+                        (chat) => chat.username === user?.username
+                    );
+                    const formattedChats = userChats.map((chat) => ({
                         ...chat,
-                        messages: formattedMessages,
-                      };
-                    }
-                    // Các chat khác giữ messages nếu có hoặc mảng rỗng
-                    return {
-                      ...chat,
-                      messages: chat.messages || [],
-                    };
-                  });
-                  dispatch(loadChat(formattedChats));
+                        messages: chat.messages || [],
+                    }));
+                    dispatch(loadChat(formattedChats));
                 }
-              });
-            }
-          });
-        } else {
-          // Nếu không có id, chỉ cần load danh sách chat cho sidebar
-          APIService.loadChatApi((dataResponse, error) => {
-            if (error) {
-              console.error("Error loading chats:", error);
-              return;
-            }
-            if (dataResponse) {
-              const userChats = dataResponse.chats.filter(
-                (chat) => chat.username === user?.username
-              );
-              const formattedChats = userChats.map((chat) => ({
-                ...chat,
-                messages: chat.messages || [],
-              }));
-              dispatch(loadChat(formattedChats));
-            }
-          });
+            });
         }
-      }, [dispatch, user, id]);
-      
-      
+    }, [dispatch, user, id]);
 
-    const handleEditClick = (messageId: string, currentText: string) => {
-        setEditMode({ isEditing: true, messageId, text: currentText });
+    const handleEditClick = (messageId: string, text: string) => {
+        setEditMode({
+            isEditing: true,
+            messageId,
+            text
+            // text: currentText
+        });
     };
 
     const scrollToBottom = () => {
@@ -225,7 +228,7 @@ export const ChatDetail = () => {
                 chatId = await new Promise<string>((resolve, reject) => {
                     APIService.addChatApi({ title: "New chat" }, (response, error) => {
                         if (error) {
-                            toast.error(t("error.gender_chat", {error: error.message}), { autoClose: 3000, pauseOnHover: false });
+                            toast.error(t("error.gender_chat", { error: error.message }), { autoClose: 3000, pauseOnHover: false });
                             setIsLoading(false);
                             return reject(error);
                         }
@@ -348,7 +351,7 @@ export const ChatDetail = () => {
                 });
             }
         } catch (err) {
-            toast.error(t("error.sending_message", {err: err}), { autoClose: 3000, pauseOnHover: false });
+            toast.error(t("error.sending_message", { err: err }), { autoClose: 3000, pauseOnHover: false });
         } finally {
             setIsLoading(false);
         }
@@ -373,7 +376,7 @@ export const ChatDetail = () => {
 
             APIService.updateMessageApi(payload, (response, error) => {
                 if (error) {
-                    toast.error(t("error.edit_message", {error: error}), { autoClose: 3000, pauseOnHover: false });
+                    toast.error(t("error.edit_message", { error: error }), { autoClose: 3000, pauseOnHover: false });
                     return;
                 }
 
@@ -386,11 +389,11 @@ export const ChatDetail = () => {
                     botResponse: actualBotResponse,
                 }));
 
-                setEditMode({ isEditing: false, messageId: "", text: "" }); // Reset trạng thái chỉnh sửa
+                setEditMode({ isEditing: false, messageId: "", text: "" }); 
                 toast.success(t("success.edit_message"), { autoClose: 3000, pauseOnHover: false });
             });
         } catch (error) {
-            toast.error(t("error.edit_message", {error: error}), { autoClose: 3000, pauseOnHover: false });
+            toast.error(t("error.edit_message", { error: error }), { autoClose: 3000, pauseOnHover: false });
         }
     };
 

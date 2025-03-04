@@ -205,7 +205,7 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
                                         onClick={(e) => {
                                             e.preventDefault();
                                             e.stopPropagation();
-                                            setMenuOpen(menuOpen === chat.id ? null : chat.id); // Toggle menu
+                                            setMenuOpen(menuOpen === chat.id ? null : chat.id); 
                                         }}
                                     >
                                         <BsThreeDotsVertical className="w-5 h-5 text-white" />
@@ -231,7 +231,7 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
                                             className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                                             onClick={() => {
                                                 handleRemoveChat(chat.id);
-                                                setMenuOpen(null); // Đóng menu sau khi chọn
+                                                setMenuOpen(null); 
                                             }}
                                         >
                                             {t("Delete")}
