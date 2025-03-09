@@ -71,26 +71,28 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
         };
     }, [menuOpen]);
 
-    const debounce = <T extends (...args: any[]) => void>(func: T, delay: number) => {
+    const debounce = <P extends unknown[]>(func: (...args: P) => void, delay: number): ((...args: P) => void) => {
         let timeoutId: ReturnType<typeof setTimeout>;
-    
-        return (...args: Parameters<T>) => {
-            clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => func(...args), delay);
+        return (...args: P) => {
+          clearTimeout(timeoutId);
+          timeoutId = setTimeout(() => func(...args), delay);
         };
-    };
-
-    const handleSearchChat = (input: string) => {
+      };
+    
+    const handleSearchChat = (input: string): void => {
         if (input.trim()) {
-            const filteredChats = userChats.filter((chat) => chat.title.toLowerCase().includes(input.toLowerCase()));
+            const filteredChats = userChats.filter((chat) =>
+                chat.title.toLowerCase().includes(input.toLowerCase())
+            );
             dispatch(loadChat(filteredChats));
         } else {
             dispatch(loadChat(userChats));
         }
-    }
-
+    };
+    
+    // ✅ Không truyền `<string>` vào debounce, TypeScript sẽ tự suy luận kiểu
     const debouncedSearch = useMemo(() => debounce(handleSearchChat, 500), [userChats]);
-
+    
     useEffect(() => {
         debouncedSearch(search);
     }, [search]);

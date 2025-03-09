@@ -38,7 +38,7 @@ const RegisterForm: React.FC = () => {
         if (language) {
             i18n.changeLanguage(language);
         }
-    }, [language]);
+    }, [language, i18n]);
 
     useEffect(() => {
         const storedLanguage = localStorage.getItem('language');
@@ -100,7 +100,7 @@ const RegisterForm: React.FC = () => {
                 }
             });
         } catch (error) {
-            toast.error(`Lỗi gửi OTP: {error}`, {autoClose: 3000, pauseOnHover: false});
+            toast.error(`Lỗi gửi OTP: ${error}`, {autoClose: 3000, pauseOnHover: false});
         } finally {
             setIsLoading(false);
         }
