@@ -10,7 +10,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { addChat, loadChat, removeChat, setNameChat } from "../store/chatSlice/chatSlice";
 import { RootState } from "../store/app";
 import { APIService } from "../services/APIServices";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { Params } from "next/dist/server/request/params";
 import { toast } from "react-toastify";
@@ -25,7 +25,9 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
     const { user } = useSelector((state: RootState) => state.auth);
     const { data } = useSelector((state: RootState) => state.chat);
     const { id } = useParams<Params>();
-    const { t } = useTranslation()
+    const { t } = useTranslation();
+    const [search, setSearch] = useState<string>("");
+    const [userChats, setUserChats] = useState<Interfaces.Chat[]>([]);
 
     useEffect(() => {
         if (!id) {
@@ -35,15 +37,11 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
                     return;
                 }
                 if (dataResponse) {
-                    const userChats = dataResponse.chats.filter(
+                    setUserChats(dataResponse.chats.filter(
                         (chat) => chat.username === user?.username
-                    );
+                    ));
 
-                    const formattedChats = userChats.map((chat) => ({
-                        ...chat,
-                        messages: chat.messages || [],
-                    }));
-                    dispatch(loadChat(formattedChats));
+                    dispatch(loadChat(userChats));
                 }
             });
         }
@@ -73,6 +71,29 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
         };
     }, [menuOpen]);
 
+    const debounce = (func: (...args: any[]) => void, delay: number) => {
+        let timeoutId: NodeJS.Timeout;
+        return (...args: any[]) => {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => func(...args), delay);
+        };
+    };
+
+    const handleSearchChat = (input: string) => {
+        if (input.trim()) {
+            const filteredChats = userChats.filter((chat) => chat.title.toLowerCase().includes(input.toLowerCase()));
+            dispatch(loadChat(filteredChats));
+        } else {
+            dispatch(loadChat(userChats));
+        }
+    }
+
+    const debouncedSearch = useMemo(() => debounce(handleSearchChat, 500), [userChats]);
+
+    useEffect(() => {
+        debouncedSearch(search);
+    }, [search]);
+
     const handleSelectChat = async (chatId: string) => {
         navigate.push(`/chat/${chatId}`);
     }
@@ -83,7 +104,7 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
             { title: "New chat" },
             (response, error) => {
                 if (error) {
-                    toast.error(t("error.create_chat", {error: error.message}));
+                    toast.error(t("error.create_chat", { error: error.message }));
                     return;
                 }
 
@@ -119,7 +140,7 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
             { chat_id: chatId, message: undefined, new_title: newTitle.trim() },
             (response, error) => {
                 if (error) {
-                    toast.error(t("error.rename_chat", {error: error.message}));
+                    toast.error(t("error.rename_chat", { error: error.message }));
                     return;
                 }
                 if (response) {
@@ -135,7 +156,7 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
         const currentChatId = id;
         APIService.removeChatApi(chatIdToRemove, (response, error) => {
             if (error) {
-                toast.error(t("error.delete_chat", {error: error.message}), {
+                toast.error(t("error.delete_chat", { error: error.message }), {
                     autoClose: 4000, pauseOnHover: false
                 });
                 return;
@@ -163,7 +184,16 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
                 >
                     <p>{t("Home")}</p>
                 </Link>
-
+                <div className="flex items-center space-x-2 relative">
+                    <input
+                        type="text"
+                        placeholder={t("Tìm kiếm đoạn chat")}
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="w-full px-4 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 
+                        focus:border-blue-500 outline-none transition duration-200 mb-5"
+                    />
+                </div>
                 <button
                     className="px-4 py-2 flex items-center space-x-4 bg-gray-700 hover:bg-gray-600 text-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white transition-colors duration-300 mb-10 text-xs rounded-md"
                     onClick={handleNewChat}
@@ -205,7 +235,7 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
                                         onClick={(e) => {
                                             e.preventDefault();
                                             e.stopPropagation();
-                                            setMenuOpen(menuOpen === chat.id ? null : chat.id); 
+                                            setMenuOpen(menuOpen === chat.id ? null : chat.id);
                                         }}
                                     >
                                         <BsThreeDotsVertical className="w-5 h-5 text-white" />
@@ -231,7 +261,7 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
                                             className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                                             onClick={() => {
                                                 handleRemoveChat(chat.id);
-                                                setMenuOpen(null); 
+                                                setMenuOpen(null);
                                             }}
                                         >
                                             {t("Delete")}

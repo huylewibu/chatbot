@@ -31,7 +31,7 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: RootLayoutProps) {
-  const { locale } = params;
+  const { locale } = await params;
   const { t } = await initTranslations(locale, ['ChatbotDemoWebApp']);
 
   return {
