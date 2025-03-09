@@ -16,7 +16,7 @@ const UserInfo: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const router = useRouter();
   const [language, setLanguage] = useState("");
   const [isLanguageLoaded, setIsLanguageLoaded] = useState(false);
-  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  // const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(false);
   const { t, i18n } = useTranslation();
 

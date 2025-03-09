@@ -26,7 +26,7 @@ const RegisterForm: React.FC = () => {
     const [timeLeft, setTimeLeft] = useState(300); // 5 phút
     const [language, setLanguage] = useState("");
     const [isLanguageLoaded, setIsLanguageLoaded] = useState(false);
-    const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+    // const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
     const [activeDropdown, setActiveDropdown] = useState(false);
 
     const dispatch = useDispatch();
@@ -99,8 +99,8 @@ const RegisterForm: React.FC = () => {
                     toast.success("OTP đã được gửi. Vui lòng kiểm tra email.", {autoClose: 3000, pauseOnHover: false});
                 }
             });
-        } catch (err) {
-            toast.error("Lỗi gửi OTP.", {autoClose: 3000, pauseOnHover: false});
+        } catch (error) {
+            toast.error(`Lỗi gửi OTP: {error}`, {autoClose: 3000, pauseOnHover: false});
         } finally {
             setIsLoading(false);
         }

@@ -19,7 +19,7 @@ const LoginForm: React.FC = () => {
     const { t, i18n } = useTranslation();
     const [language, setLanguage] = useState("");
     const [isLanguageLoaded, setIsLanguageLoaded] = useState(false);
-    const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+    // const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
     const [activeDropdown, setActiveDropdown] = useState(false);
 
     const dispatch = useDispatch();
