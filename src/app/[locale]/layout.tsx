@@ -60,7 +60,7 @@ export async function generateMetadata({ params }: RootLayoutProps) {
 
 const RootLayout = async ({ children, params}: RootLayoutProps) => {
   const { locale } = await params;
-  const { t, resources } = await initTranslations(locale, i18nNamespaces);
+  const { resources } = await initTranslations(locale, i18nNamespaces);
 
   return (
     <html lang={locale} dir={dir(locale)}>

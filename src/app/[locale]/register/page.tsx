@@ -19,6 +19,7 @@ const RegisterForm: React.FC = () => {
     const [confirmPassword, setConfirmPassword] = useState("");
     const {t, i18n} = useTranslation()
     const [isLoading, setIsLoading] = useState(false);
+    console.log(isLoading)
     const [otpArray, setOtpArray] = useState(Array(6).fill(""));
     const [otpCode, setOtpCode] = useState("");
     const [otpSent, setOtpSent] = useState(false);
@@ -49,9 +50,9 @@ const RegisterForm: React.FC = () => {
         setIsLanguageLoaded(true);
     }, []);
 
-    const toggleMobileNav = () => {
-        setIsMobileNavOpen(!isMobileNavOpen);
-    };
+    // const toggleMobileNav = () => {
+    //     setIsMobileNavOpen(!isMobileNavOpen);
+    // };
 
     const toggleDropdown = () => {
         setActiveDropdown(!activeDropdown);

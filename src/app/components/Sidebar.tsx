@@ -71,9 +71,10 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
         };
     }, [menuOpen]);
 
-    const debounce = (func: (...args: any[]) => void, delay: number) => {
-        let timeoutId: NodeJS.Timeout;
-        return (...args: any[]) => {
+    const debounce = <T extends (...args: unknown[]) => void>(func: T, delay: number) => {
+        let timeoutId: ReturnType<typeof setTimeout>;
+        
+        return (...args: Parameters<T>) => {
             clearTimeout(timeoutId);
             timeoutId = setTimeout(() => func(...args), delay);
         };
@@ -154,7 +155,7 @@ const Sidebar: React.FC<Interfaces.SidebarProps> = ({ isOpen }) => {
 
     const handleRemoveChat = (chatIdToRemove: string) => {
         const currentChatId = id;
-        APIService.removeChatApi(chatIdToRemove, (response, error) => {
+        APIService.removeChatApi(chatIdToRemove, (_, error) => {
             if (error) {
                 toast.error(t("error.delete_chat", { error: error.message }), {
                     autoClose: 4000, pauseOnHover: false

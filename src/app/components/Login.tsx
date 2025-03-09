@@ -41,9 +41,9 @@ const LoginForm: React.FC = () => {
         setIsLanguageLoaded(true);
     }, []);
 
-    const toggleMobileNav = () => {
-        setIsMobileNavOpen(!isMobileNavOpen);
-    };
+    // const toggleMobileNav = () => {
+    //     setIsMobileNavOpen(!isMobileNavOpen);
+    // };
 
     const toggleDropdown = () => {
         setActiveDropdown(!activeDropdown);

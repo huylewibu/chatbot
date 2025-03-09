@@ -44,9 +44,9 @@ const UserInfo: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     setIsLanguageLoaded(true);
   }, []);
 
-  const toggleMobileNav = () => {
-    setIsMobileNavOpen(!isMobileNavOpen);
-  };
+  // const toggleMobileNav = () => {
+  //   setIsMobileNavOpen(!isMobileNavOpen);
+  // };
 
   const toggleDropdown = () => {
     setActiveDropdown(!activeDropdown);
